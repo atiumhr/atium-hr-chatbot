@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR팀 AI사원 장하리</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HR 도우미">
+<meta name="theme-color" content="#1e40af">
+<link rel="apple-touch-icon" href="atium_chatbot_icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f1f5f9;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+#wrap{display:flex;flex-direction:column;height:720px;width:700px;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,0.08);}
+#hdr{padding:14px 18px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg,#1e40af,#3b82f6);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+#hdr-icon{width:44px;height:44px;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(29,78,216,0.35));}
+#hdr-info{flex:1;}
+#hdr-title{font-size:16px;font-weight:700;color:#fff;}
+#hdr-sub{font-size:11.5px;color:rgba(255,255,255,0.8);margin-top:2px;}
+
+/* 설치 버튼 */
+#install-btn{display:none;align-items:center;gap:6px;padding:7px 13px;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.45);border-radius:20px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background 0.15s;flex-shrink:0;}
+#install-btn:hover{background:rgba(255,255,255,0.32);}
+#install-btn.show{display:flex;}
+
+/* iOS 설치 안내 배너 */
+#ios-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:#1e40af;color:#fff;padding:14px 20px;font-size:13px;line-height:1.6;z-index:999;text-align:center;}
+#ios-banner b{display:block;font-size:14px;margin-bottom:4px;}
+#ios-close{margin-top:8px;display:inline-block;padding:5px 18px;border:1px solid rgba(255,255,255,0.5);border-radius:12px;cursor:pointer;font-size:12px;}
+
+#msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.msg-bot{display:flex;gap:9px;align-items:flex-start;}
+.bot-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;margin-top:2px;overflow:hidden;}
+.bot-bbl{background:#f1f5f9;border-radius:0 12px 12px 12px;padding:11px 15px;font-size:13.5px;color:#334155;line-height:1.65;max-width:88%;}
+.msg-user{display:flex;justify-content:flex-end;}
+.user-bbl{background:#3b82f6;color:#fff;border-radius:12px 0 12px 12px;padding:10px 15px;font-size:13.5px;line-height:1.6;max-width:80%;}
+.widget{padding-left:41px;}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px 0;}
+.cat-btn{padding:10px 13px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-size:13px;color:#334155;text-align:left;transition:all 0.15s;display:flex;align-items:center;gap:7px;font-weight:500;}
+.cat-btn:hover{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;}
+.sub-list{display:flex;flex-direction:column;gap:7px;padding:4px 0;}
+.sub-btn{padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;cursor:pointer;font-size:13px;color:#334155;text-align:left;transition:all 0.15s;font-weight:500;display:flex;align-items:center;gap:7px;}
+.sub-btn:hover{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;}
+.q-list{display:flex;flex-direction:column;gap:7px;padding:4px 0;}
+.q-btn{padding:9px 13px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;cursor:pointer;font-size:13px;color:#334155;text-align:left;transition:all 0.15s;line-height:1.45;}
+.q-btn:hover{background:#eff6ff;border-color:#93c5fd;}
+.nav-btns{display:flex;gap:7px;margin-top:2px;flex-wrap:wrap;}
+.back-btn{padding:6px 13px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:12px;color:#64748b;display:inline-flex;align-items:center;gap:4px;}
+.back-btn:hover{background:#f1f5f9;border-color:#94a3b8;}
+.answer-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 15px;font-size:13.5px;color:#14532d;line-height:1.75;}
+.info-box{background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:9px 13px;font-size:12px;color:#78350f;margin-top:7px;line-height:1.6;}
+
+/* ── 고충처리함 (종이비행기) ── */
+#home-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.45);color:#fff;cursor:pointer;flex-shrink:0;transition:all 0.15s;padding:0;}
+#home-btn:hover{background:rgba(255,255,255,0.36);transform:translateY(-1px);}
+#home-btn svg{width:20px;height:20px;}
+#grievance-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.45);color:#fff;cursor:pointer;flex-shrink:0;transition:all 0.15s;padding:0;}
+#grievance-btn:hover{background:rgba(255,255,255,0.36);transform:translateY(-1px) rotate(-8deg);}
+#grievance-btn svg{width:20px;height:20px;}
+
+#gr-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+#gr-overlay.show{display:flex;}
+#gr-modal{width:100%;max-width:440px;max-height:90vh;background:#fff;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,0.32);animation:grPop 0.25s ease;}
+@keyframes grPop{from{opacity:0;transform:translateY(14px) scale(0.97);}to{opacity:1;transform:none;}}
+#gr-head{padding:17px 20px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#gr-head svg{width:24px;height:24px;flex-shrink:0;}
+#gr-head .gr-tt{flex:1;font-size:15px;font-weight:700;}
+#gr-close{cursor:pointer;font-size:24px;line-height:1;color:rgba(255,255,255,0.85);background:none;border:none;padding:0 2px;}
+#gr-close:hover{color:#fff;}
+#gr-form{display:flex;flex-direction:column;min-height:0;flex:1;}
+#gr-body{padding:20px;overflow-y:auto;}
+.gr-intro{background:#eff6ff;border:1px solid #dbeafe;border-radius:14px;padding:16px 17px;font-size:13px;color:#334155;line-height:1.75;}
+.gr-intro .gr-h{font-size:14px;font-weight:700;color:#1d4ed8;display:block;margin-bottom:9px;}
+#gr-inputbar{display:flex;align-items:flex-end;gap:8px;padding:12px 14px;border-top:1px solid #e2e8f0;background:#f8fafc;flex-shrink:0;}
+#gr-text{flex:1;border:1px solid #cbd5e1;border-radius:20px;padding:10px 16px;font-size:13.5px;resize:none;max-height:120px;line-height:1.5;font-family:inherit;outline:none;background:#fff;}
+#gr-text:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.12);}
+#gr-send{width:42px;height:42px;border-radius:50%;background:#3b82f6;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+#gr-send svg{width:19px;height:19px;}
+#gr-send:hover:not(:disabled){background:#2563eb;transform:scale(1.06);}
+#gr-send:disabled{background:#cbd5e1;cursor:not-allowed;}
+#gr-success{display:none;text-align:center;padding:42px 26px;}
+#gr-success .pl{font-size:50px;animation:grFly 0.7s ease;}
+@keyframes grFly{0%{transform:translateX(-40px) translateY(20px) rotate(-25deg);opacity:0;}100%{transform:none;opacity:1;}}
+#gr-success .st{font-size:17px;font-weight:700;color:#1d4ed8;margin-top:14px;}
+#gr-success .sd{font-size:13px;color:#64748b;margin-top:9px;line-height:1.7;}
+#gr-success button{margin-top:24px;padding:11px 32px;border:none;border-radius:22px;background:#3b82f6;color:#fff;font-size:13.5px;font-weight:600;cursor:pointer;}
+#gr-success button:hover{background:#2563eb;}
+
+/* ══════════════════════════════════════════════════════
+   오프닝 인트로 (런처 화면)
+   ══════════════════════════════════════════════════════ */
+#intro-overlay{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#e8f4fd 0%,#fce4f0 50%,#e8f0fe 100%);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;transition:opacity .55s ease, transform .55s ease;}
+#intro-overlay.hide{opacity:0;transform:scale(1.04);pointer-events:none;}
+#intro-overlay::before{content:'';position:absolute;inset:-50%;background:radial-gradient(circle at 20% 30%,rgba(168,200,255,.35) 0%,transparent 40%),radial-gradient(circle at 80% 70%,rgba(255,182,220,.35) 0%,transparent 40%),radial-gradient(circle at 50% 50%,rgba(200,220,255,.2) 0%,transparent 50%);pointer-events:none;}
+.io-bubble{position:absolute;border-radius:50%;opacity:.18;animation:ioFloat linear infinite;pointer-events:none;}
+.io-bubble:nth-child(1){width:60px;height:60px;background:#a8c8ff;top:10%;left:8%;animation-duration:8s;}
+.io-bubble:nth-child(2){width:40px;height:40px;background:#ffb6dc;top:70%;left:5%;animation-duration:6s;animation-delay:-2s;}
+.io-bubble:nth-child(3){width:80px;height:80px;background:#b8e4ff;top:30%;right:6%;animation-duration:10s;animation-delay:-4s;}
+.io-bubble:nth-child(4){width:30px;height:30px;background:#ffd6f0;top:80%;right:10%;animation-duration:7s;animation-delay:-1s;}
+.io-bubble:nth-child(5){width:50px;height:50px;background:#c8d8ff;top:50%;left:50%;animation-duration:9s;animation-delay:-3s;}
+@keyframes ioFloat{0%,100%{transform:translateY(0) rotate(0)}33%{transform:translateY(-20px) rotate(5deg)}66%{transform:translateY(-10px) rotate(-3deg)}}
+.io-inner{position:relative;z-index:1;text-align:center;padding:40px 48px 48px;}
+.io-badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:50px;padding:10px 22px;box-shadow:0 4px 20px rgba(100,140,255,.15);margin-bottom:14px;animation:ioPop .6s cubic-bezier(.175,.885,.32,1.275) both;}
+.io-dot{width:10px;height:10px;background:linear-gradient(135deg,#6c8fff,#c77dff);border-radius:50%;animation:ioPulse 2s ease-in-out infinite;}
+@keyframes ioPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+.io-logo-text{font-size:13px;font-weight:800;color:#6c8fff;letter-spacing:2px;}
+.io-title{font-size:24px;font-weight:900;color:#3a3a5c;line-height:1.35;margin-bottom:6px;padding:0 8px;animation:ioPop .6s .1s cubic-bezier(.175,.885,.32,1.275) both;}
+.io-sub{font-size:14px;color:#8888aa;font-weight:600;margin-bottom:40px;animation:ioPop .6s .2s both;}
+.io-cards{display:flex;gap:40px;justify-content:center;align-items:flex-start;}
+.io-card{display:inline-flex;flex-direction:column;align-items:center;gap:14px;cursor:pointer;animation:ioPop .6s .3s cubic-bezier(.175,.885,.32,1.275) both;}
+@keyframes ioPop{from{opacity:0;transform:scale(.5) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.io-icon{width:120px;height:120px;border-radius:32px;display:flex;align-items:center;justify-content:center;position:relative;transition:transform .2s cubic-bezier(.175,.885,.32,1.275);background:linear-gradient(145deg,#74d7f7,#5bbff5,#4aaaf0);box-shadow:0 12px 32px rgba(90,185,245,.45),inset 0 1px 0 rgba(255,255,255,.4);}
+.io-icon-pink{background:linear-gradient(145deg,#ff9ec4,#fb7eb0,#f56aa3);box-shadow:0 12px 32px rgba(245,106,163,.42),inset 0 1px 0 rgba(255,255,255,.4);}
+.io-card:hover .io-icon{transform:scale(1.08) translateY(-6px);}
+.io-card:active .io-icon{transform:scale(.95);}
+.io-icon svg{width:64px;height:64px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.15));}
+.io-badge-ai{position:absolute;top:-6px;right:-6px;width:28px;height:28px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff9a56,#ff6b9d);font-size:8px;font-weight:900;color:#fff;letter-spacing:.5px;}
+.io-label{font-size:17px;font-weight:800;color:#3a3a5c;}
+.io-foot{margin-top:48px;font-size:12px;color:#bbbbcc;font-weight:600;animation:ioPop .6s .5s both;}
+.io-deco{font-size:16px;display:inline-block;animation:ioHeart 1.5s ease-in-out infinite;}
+@keyframes ioHeart{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.io-download{display:inline-flex;align-items:center;gap:7px;margin-top:16px;background:linear-gradient(135deg,#8ea9ff,#aa92f3,#d196ee);border:none;border-radius:50px;padding:10px 20px;cursor:pointer;animation:ioPop .6s .6s both;transition:transform .2s cubic-bezier(.175,.885,.32,1.275),box-shadow .2s ease;box-shadow:0 6px 16px rgba(140,140,240,.28),inset 0 1px 0 rgba(255,255,255,.35);}
+.io-download:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 10px 22px rgba(140,140,240,.36),inset 0 1px 0 rgba(255,255,255,.35);}
+.io-download:active{transform:scale(.97);}
+.io-download svg{width:16px;height:16px;}
+.io-download span{font-size:13px;font-weight:800;color:#fff;letter-spacing:.3px;}
+
+/* ── 명함 신청 화면 (card-overlay) ── */
+#card-overlay{position:fixed;inset:0;z-index:2100;background:linear-gradient(135deg,#e8f4fd 0%,#fce4f0 50%,#e8f0fe 100%);display:none;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;opacity:0;pointer-events:none;transition:opacity .4s ease;}
+#card-overlay.show{opacity:1;pointer-events:auto;}
+#card-overlay::before{content:'';position:absolute;inset:-50%;background:radial-gradient(circle at 25% 25%,rgba(168,200,255,.3) 0%,transparent 42%),radial-gradient(circle at 75% 75%,rgba(255,182,220,.3) 0%,transparent 42%);pointer-events:none;}
+.co-inner{position:relative;z-index:1;text-align:center;padding:40px 32px;width:100%;max-width:560px;}
+.co-back{position:absolute;top:24px;left:24px;z-index:2;display:inline-flex;align-items:center;gap:5px;background:#fff;border:none;border-radius:50px;padding:9px 16px 9px 12px;cursor:pointer;box-shadow:0 4px 16px rgba(100,140,255,.18);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:#6c8fff;transition:transform .18s;}
+.co-back:hover{transform:translateX(-3px);}
+.co-back svg{width:15px;height:15px;}
+.co-title{font-size:26px;font-weight:900;color:#3a3a5c;margin-bottom:8px;}
+.co-sub{font-size:14px;color:#8888aa;font-weight:600;margin-bottom:38px;}
+.co-cards{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;}
+.co-card{flex:1 1 180px;max-width:220px;min-width:158px;background:#fff;border-radius:26px;padding:30px 20px 26px;cursor:pointer;box-shadow:0 10px 30px rgba(120,140,220,.16);transition:transform .2s cubic-bezier(.175,.885,.32,1.275),box-shadow .2s;display:flex;flex-direction:column;align-items:center;gap:14px;}
+.co-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(120,140,220,.24);}
+.co-card:active{transform:scale(.97);}
+.co-ic{width:96px;height:96px;border-radius:26px;display:flex;align-items:center;justify-content:center;}
+.co-ic svg{width:50px;height:50px;filter:drop-shadow(0 2px 5px rgba(0,0,0,.12));}
+.co-ic-blue{background:linear-gradient(145deg,#74d7f7,#5bbff5,#4aaaf0);box-shadow:0 10px 26px rgba(90,185,245,.4),inset 0 1px 0 rgba(255,255,255,.4);}
+.co-ic-purple{background:linear-gradient(145deg,#a98bf5,#9575f0,#8163e8);box-shadow:0 10px 26px rgba(129,99,232,.4),inset 0 1px 0 rgba(255,255,255,.4);}
+.co-label{font-size:18px;font-weight:800;color:#3a3a5c;}
+.co-desc{font-size:12.5px;color:#9a9ab5;font-weight:600;margin-top:-7px;}
+.co-notice{margin-top:30px;min-height:22px;font-size:13.5px;font-weight:700;color:#6c8fff;opacity:0;transition:opacity .3s;}
+.co-notice.show{opacity:1;}
+
+@media(max-width:460px){
+  .io-inner{padding:32px 18px 40px;}
+  .io-title{font-size:21px;}
+  .io-cards{gap:22px;}
+  .io-icon{width:96px;height:96px;border-radius:26px;}
+  .io-icon svg{width:48px;height:48px;}
+  .io-label{font-size:15px;}
+  .co-title{font-size:22px;}
+  .co-cards{gap:16px;}
+  .co-card{padding:24px 14px 20px;}
+  .co-ic{width:80px;height:80px;}
+  .co-ic svg{width:42px;height:42px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     오프닝 인트로 (런처) — 챗봇 아이콘 클릭 시 사라짐
+     ══════════════════════════════════════════════════════ -->
+<div id="intro-overlay">
+  <div class="io-bubble"></div><div class="io-bubble"></div><div class="io-bubble"></div><div class="io-bubble"></div><div class="io-bubble"></div>
+  <div class="io-inner">
+    <div class="io-badge"><div class="io-dot"></div><span class="io-logo-text">ATIUM HR</span></div>
+    <div class="io-title">ATIUM HR팀 AI사원 장하리(HR+AI) 🤖</div>
+
+    <div class="io-cards">
+      <div class="io-card" onclick="enterChatbot()">
+        <div class="io-icon">
+          <svg viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11 13 H47 a5 5 0 0 1 5 5 V34 a5 5 0 0 1 -5 5 H23 l-8 8 v-8 h-4 a5 5 0 0 1 -5 -5 V18 a5 5 0 0 1 5 -5 Z" fill="white" opacity="0.96"/>
+            <path d="M24 22 a5.5 5.5 0 1 1 9 4.4 c-1.9 1.4 -3 2.2 -3 4" stroke="#4aaaf0" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="30" cy="33.6" r="2.4" fill="#4aaaf0"/>
+          </svg>
+        </div>
+        <div class="io-label">해결하리</div>
+      </div>
+
+      <div class="io-card" onclick="openCardRequest()">
+        <div class="io-icon io-icon-pink">
+          <svg viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="7" y="16" width="44" height="29" rx="5" fill="white" opacity="0.96"/>
+            <circle cx="19" cy="28" r="5.5" fill="#e8488f"/>
+            <rect x="30" y="23.5" width="15" height="3.2" rx="1.6" fill="#e8488f"/>
+            <rect x="30" y="30.5" width="11" height="3.2" rx="1.6" fill="#f48fbb"/>
+            <rect x="13" y="38.5" width="32" height="2.8" rx="1.4" fill="#fbc4dc"/>
+          </svg>
+        </div>
+        <div class="io-label">신청하리</div>
+      </div>
+    </div>
+
+    <div class="io-foot">Made with <span class="io-deco">💜</span> for ATIUM HR Team</div>
+    <div>
+      <button class="io-download" onclick="event.stopPropagation();introInstall()">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3 V14 M8 10 L12 14 L16 10" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 16 V18 A2 2 0 0 0 7 20 H17 A2 2 0 0 0 19 18 V16" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>앱 다운로드</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     명함 신청 화면 — 신청하리 카드 클릭 시 표시
+     ══════════════════════════════════════════════════════ -->
+<div id="card-overlay">
+  <button class="co-back" onclick="closeCardRequest()">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 5 L8 12 L15 19" stroke="#6c8fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    홈으로
+  </button>
+  <div class="co-inner">
+    <div class="co-title">명함 신청 📇</div>
+    <div class="co-sub">신청하실 전자 명함 종류를 선택해 주세요</div>
+    <div class="co-cards">
+      <div class="co-card" onclick="selectCardType('국문 명함')">
+        <div class="co-ic co-ic-blue">
+          <svg viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="14" width="42" height="30" rx="4" fill="white" opacity="0.96"/>
+            <circle cx="20" cy="26" r="5" fill="#4aaaf0"/>
+            <rect x="30" y="22" width="14" height="3" rx="1.5" fill="#4aaaf0"/>
+            <rect x="30" y="29" width="10" height="3" rx="1.5" fill="#8fd0f7"/>
+            <rect x="13" y="36" width="30" height="2.6" rx="1.3" fill="#bfe4fb"/>
+          </svg>
+        </div>
+        <div class="co-label">국문 명함</div>
+        <div class="co-desc">한글 전자 명함</div>
+      </div>
+
+      <div class="co-card" onclick="selectCardType('영문 명함')">
+        <div class="co-ic co-ic-purple">
+          <svg viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="7" y="15" width="44" height="29" rx="5" fill="white" opacity="0.96"/>
+            <path d="M14 38 L18.5 22 L23 38 M15.6 33 H21.4" stroke="#8163e8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <rect x="29" y="23" width="16" height="3.2" rx="1.6" fill="#8163e8"/>
+            <rect x="29" y="30" width="12" height="3.2" rx="1.6" fill="#b9a4f5"/>
+            <rect x="29" y="37" width="14" height="2.8" rx="1.4" fill="#d6c9fa"/>
+          </svg>
+        </div>
+        <div class="co-label">영문 명함</div>
+        <div class="co-desc">영문(English) 전자 명함</div>
+      </div>
+    </div>
+    <div class="co-notice" id="co-notice"></div>
+  </div>
+</div>
+
+<div id="wrap">
+  <div id="hdr">
+    <svg id="hdr-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="iconBg" cx="38%" cy="32%" r="68%">
+          <stop offset="0%" stop-color="#60a5fa"/>
+          <stop offset="100%" stop-color="#1d4ed8"/>
+        </radialGradient>
+        <radialGradient id="bubbleGrad" cx="35%" cy="28%" r="65%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#eff6ff"/>
+        </radialGradient>
+        <radialGradient id="shineGrad" cx="28%" cy="18%" r="68%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="blushL" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fda4af" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#fb7185" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="blushR" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fda4af" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#fb7185" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="softShadow" x="-20%" y="-20%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="14" stdDeviation="20" flood-color="#1d4ed8" flood-opacity="0.3"/>
+        </filter>
+        <filter id="bubbleShadow" x="-10%" y="-10%" width="125%" height="135%">
+          <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#3b82f6" flood-opacity="0.2"/>
+        </filter>
+      </defs>
+      <rect x="12" y="12" width="488" height="488" rx="116" fill="url(#iconBg)" filter="url(#softShadow)"/>
+      <ellipse cx="155" cy="112" rx="148" ry="88" fill="url(#shineGrad)"/>
+      <rect x="22" y="22" width="468" height="468" rx="108" fill="none" stroke="#93c5fd" stroke-width="3" opacity="0.35"/>
+      <g filter="url(#bubbleShadow)">
+        <rect x="64" y="110" width="368" height="246" rx="62" fill="url(#bubbleGrad)"/>
+        <path d="M136 356 Q110 408 78 430 Q144 412 174 368" fill="url(#bubbleGrad)"/>
+      </g>
+      <ellipse cx="176" cy="218" rx="23" ry="26" fill="#1d4ed8" opacity="0.88"/>
+      <ellipse cx="184" cy="208" rx="8" ry="8" fill="white" opacity="0.75"/>
+      <ellipse cx="314" cy="218" rx="23" ry="26" fill="#1d4ed8" opacity="0.88"/>
+      <ellipse cx="322" cy="208" rx="8" ry="8" fill="white" opacity="0.75"/>
+      <path d="M192 272 Q245 316 298 272" stroke="#2563eb" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.75"/>
+      <ellipse cx="136" cy="268" rx="36" ry="22" fill="url(#blushL)"/>
+      <ellipse cx="352" cy="268" rx="36" ry="22" fill="url(#blushR)"/>
+      <line x1="394" y1="64" x2="394" y2="100" stroke="#fde68a" stroke-width="5" stroke-linecap="round"/>
+      <line x1="376" y1="82" x2="412" y2="82" stroke="#fde68a" stroke-width="5" stroke-linecap="round"/>
+      <line x1="428" y1="106" x2="428" y2="126" stroke="#fde68a" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="418" y1="116" x2="438" y2="116" stroke="#fde68a" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="70" y1="76" x2="70" y2="98" stroke="#bae6fd" stroke-width="4" stroke-linecap="round"/>
+      <line x1="59" y1="87" x2="81" y2="87" stroke="#bae6fd" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="436" cy="424" r="11" fill="#93c5fd" opacity="0.55"/>
+      <circle cx="458" cy="400" r="6.5" fill="#bfdbfe" opacity="0.45"/>
+    </svg>
+    <div id="hdr-info">
+      <div id="hdr-title">HR팀 AI사원 장하리(HR+AI) 🤖</div>
+      <div id="hdr-sub">임직원 문의 응대 시스템 · 에이티움 전용</div>
+    </div>
+    <!-- 홈 (첫 화면으로) -->
+    <button id="home-btn" onclick="goHome()" title="첫 화면으로">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 L12 3 L21 10.5"/><path d="M5 9.5 V20 H19 V9.5"/><path d="M9.5 20 V14 H14.5 V20"/></svg>
+    </button>
+    <!-- 고충처리함 (종이비행기) -->
+    <button id="grievance-btn" onclick="openGrievance()" title="고충처리함 · 종이비행기 보내기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+    <!-- 설치 버튼 (Android/Chrome 자동 표시) -->
+    <button id="install-btn" onclick="installApp()">⬇ 앱 설치</button>
+  </div>
+  <div id="msgs"></div>
+</div>
+
+<!-- ── 고충처리함 모달 ── -->
+<div id="gr-overlay" onclick="if(event.target===this)closeGrievance()">
+  <div id="gr-modal">
+    <div id="gr-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <div class="gr-tt">종이비행기 고충처리함</div>
+      <button id="gr-close" onclick="closeGrievance()">&times;</button>
+    </div>
+
+    <div id="gr-form">
+      <div id="gr-body">
+        <div class="gr-intro">
+          <span class="gr-h">🛩 무슨 고민이든 괜찮아요</span>
+          업무, 조직문화, 인간관계, 복지, 근무환경 등 회사 생활 중 느끼는 고민과 건의사항을 자유롭게 보내주세요.<br><br>
+          작은 불편함부터 큰 고민까지, 종이비행기에 담아 날려주세요.<br><br>
+          날아온 종이비행기는 <b>인사팀 담당자만</b> 확인할 수 있습니다.
+        </div>
+      </div>
+      <div id="gr-inputbar">
+        <textarea id="gr-text" rows="1" placeholder="고민이나 건의사항을 입력하세요…" oninput="grAutoGrow(this)" onkeydown="grKey(event)"></textarea>
+        <button id="gr-send" onclick="sendGrievance()" title="보내기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="gr-success">
+      <div class="pl">🛩️</div>
+      <div class="st">종이비행기가 날아갔어요!</div>
+      <div class="sd">소중한 이야기 감사합니다.<br>인사팀 담당자가 확인 후 살펴보겠습니다.</div>
+      <button onclick="closeGrievance()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- iOS 설치 안내 배너 -->
+<div id="ios-banner">
+  <b>📲 홈 화면에 추가하는 방법</b>
+  Safari 하단 공유 버튼(□↑) 누르고 → "홈 화면에 추가" 선택
+  <div id="ios-close" onclick="document.getElementById('ios-banner').style.display='none'">닫기</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  오프닝 인트로 제어
+// ══════════════════════════════════════════════════════
+function enterChatbot(){
+  const ov = document.getElementById('intro-overlay');
+  ov.classList.add('hide');
+  setTimeout(()=>{ ov.style.display='none'; }, 600);
+}
+
+// ── 명함 신청 화면 제어 ──
+function openCardRequest(){
+  const ov = document.getElementById('card-overlay');
+  if(ov){ ov.style.display='flex'; requestAnimationFrame(()=>ov.classList.add('show')); }
+  const n = document.getElementById('co-notice');
+  if(n){ n.classList.remove('show'); n.textContent=''; }
+}
+function closeCardRequest(){
+  const ov = document.getElementById('card-overlay');
+  if(ov){ ov.classList.remove('show'); setTimeout(()=>{ ov.style.display='none'; }, 400); }
+}
+function selectCardType(type){
+  const n = document.getElementById('co-notice');
+  if(n){ n.textContent = type + ' 신청 기능은 준비 중입니다 🛠️'; n.classList.add('show'); }
+}
+// 인트로의 "앱 다운로드" 버튼 → 헤더 설치 버튼과 동일한 PWA 설치 흐름
+function introInstall(){
+  if (deferredPrompt) {
+    installApp();
+  } else if (isIOS) {
+    document.getElementById('ios-banner').style.display = 'block';
+  } else {
+    alert('이미 설치되었거나, 브라우저 주소창의 설치 아이콘으로 추가할 수 있어요.');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  PWA 설치
+// ══════════════════════════════════════════════════════
+let deferredPrompt = null;
+
+// Android/Chrome: 설치 프롬프트 대기
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-btn').classList.add('show');
+});
+
+// 설치 완료 시 버튼 숨기기
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-btn').classList.remove('show');
+  deferredPrompt = null;
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('install-btn').classList.remove('show');
+    });
+  }
+}
+
+// iOS Safari 감지 → 배너 표시
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isInStandaloneMode = window.navigator.standalone === true;
+if (isIOS && !isInStandaloneMode) {
+  document.getElementById('ios-banner').style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════
+//  GOOGLE SHEETS 연동 설정
+// ══════════════════════════════════════════════════════
+const SHEET_API_KEY = 'AIzaSyBxVKofJ9iGFFOZZVNZ3HfhlJbYij9s-NA';
+const SHEET_ID      = '1KQuKpjGLAoLV00_btBrXbv3QZ3C63DtgKAAEM52_Rjk';
+const SHEET_NAME    = 'HR Chatbot DB';
+
+const TRACKER_URL = 'https://script.google.com/macros/s/AKfycbykKdkmsWyRwLBoPTwjzZH434SEIi_j2eChqZKBIF96sIBWxE6Ym0nT7S3z0t7corVR/exec';
+
+function trackEvent(eventType, category='', subCategory='', question='') {
+  if (!TRACKER_URL || TRACKER_URL.startsWith('YOUR_')) return;
+  try {
+    fetch(TRACKER_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ eventType, category, subCategory, question })
+    });
+  } catch(e) {}
+}
+
+async function loadFromGoogleSheets(){
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${SHEET_API_KEY}`;
+  try {
+    const res = await fetch(url);
+    if(!res.ok){
+      const errJson = await res.json().catch(()=>({}));
+      throw new Error(`API 오류 ${res.status}: ${errJson.error?.message || res.statusText}`);
+    }
+    const json = await res.json();
+    const rows = json.values || [];
+    if(rows.length < 2){ addBot('❌ 시트에 데이터가 없습니다.'); return; }
+
+    const headers = rows[0];
+    const colIdx = {
+      cat:  headers.indexOf('대카테고리'),
+      sub:  headers.indexOf('소카테고리'),
+      q:    headers.indexOf('질문'),
+      a:    headers.indexOf('답변'),
+      info: headers.indexOf('담당자정보'),
+    };
+    const missing = Object.entries(colIdx).filter(([k,v])=>k!=='info'&&v===-1).map(([k])=>k);
+    if(missing.length){ addBot(`❌ 필수 컬럼 누락: ${missing.join(', ')}`); return; }
+
+    const catsMap = new Map();
+    rows.slice(1).forEach(row => {
+      const catRaw   = (row[colIdx.cat]||'').trim();
+      const subLabel = (row[colIdx.sub]||'').trim();
+      const q        = (row[colIdx.q]||'').trim();
+      const a        = (row[colIdx.a]||'').trim();
+      const info     = colIdx.info >= 0 ? (row[colIdx.info]||'').trim() : '';
+      if(!catRaw||!subLabel||!q||!a) return;
+
+      const iconMatch = catRaw.match(/^(\p{Emoji}[\ufe0f\u20e3]?)\s*(.+)$/u);
+      const catIcon   = iconMatch ? iconMatch[1] : '';
+      const catLabel  = iconMatch ? iconMatch[2].trim() : catRaw;
+
+      if(!catsMap.has(catLabel)){
+        catsMap.set(catLabel, { id: catLabel.replace(/[^a-zA-Z0-9가-힣]/g,'_'), icon:catIcon, label:catLabel, subsMap:new Map() });
+      }
+      const cat = catsMap.get(catLabel);
+      if(catIcon) cat.icon = catIcon;
+      if(!cat.subsMap.has(subLabel)) cat.subsMap.set(subLabel, {label:subLabel, qs:[]});
+      const qObj = {q, a};
+      if(info) qObj.info = info;
+      cat.subsMap.get(subLabel).qs.push(qObj);
+    });
+
+    const newData = {cats:[]};
+    catsMap.forEach(cat => {
+      const subs = []; cat.subsMap.forEach(sub => subs.push(sub));
+      newData.cats.push({id:cat.id, icon:cat.icon, label:cat.label, subs});
+    });
+    if(!newData.cats.length){ addBot('❌ 유효한 데이터가 없습니다.'); return; }
+
+    DATA = newData;
+    state='cats'; curCatIdx=null; curSubIdx=null;
+    $m().innerHTML='';
+    addBot(`안녕하세요! 저는 에이티움 <b>HR팀 AI사원 장하리 🤖</b> 입니다.<br>제가 준비한 카테고리를 눌러 궁금증을 해결하세요!`);
+    showCats();
+  } catch(err){
+    console.error(err);
+    addBot('❌ 데이터 로드 실패: ' + err.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  CHATBOT STATE
+// ══════════════════════════════════════════════════════
+let state = 'cats';
+let curCatIdx = null;
+let curSubIdx = null;
+let DATA = { cats: [] };
+
+function $m(){ return document.getElementById('msgs'); }
+
+const BOT_AVATAR_SVG = `<svg viewBox="0 0 512 512" style="width:32px;height:32px;border-radius:50%;" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="av_bg" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d4ed8"/>
+    </radialGradient>
+    <radialGradient id="av_bbl" cx="35%" cy="28%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#eff6ff"/>
+    </radialGradient>
+    <radialGradient id="av_bl" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fda4af" stop-opacity="0.85"/><stop offset="100%" stop-color="#fb7185" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="av_br" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fda4af" stop-opacity="0.85"/><stop offset="100%" stop-color="#fb7185" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="av_sh" cx="28%" cy="18%" r="68%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="12" y="12" width="488" height="488" rx="116" fill="url(#av_bg)"/>
+  <ellipse cx="155" cy="112" rx="148" ry="88" fill="url(#av_sh)"/>
+  <rect x="64" y="110" width="368" height="246" rx="62" fill="url(#av_bbl)"/>
+  <path d="M136 356 Q110 408 78 430 Q144 412 174 368" fill="url(#av_bbl)"/>
+  <ellipse cx="176" cy="218" rx="23" ry="26" fill="#1d4ed8" opacity="0.88"/>
+  <ellipse cx="184" cy="208" rx="8" ry="8" fill="white" opacity="0.75"/>
+  <ellipse cx="314" cy="218" rx="23" ry="26" fill="#1d4ed8" opacity="0.88"/>
+  <ellipse cx="322" cy="208" rx="8" ry="8" fill="white" opacity="0.75"/>
+  <path d="M192 272 Q245 316 298 272" stroke="#2563eb" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.75"/>
+  <ellipse cx="136" cy="268" rx="36" ry="22" fill="url(#av_bl)"/>
+  <ellipse cx="352" cy="268" rx="36" ry="22" fill="url(#av_br)"/>
+</svg>`;
+
+function addBot(html){
+  const d = document.createElement('div');
+  d.className = 'msg-bot';
+  d.innerHTML = `<div class="bot-av">${BOT_AVATAR_SVG}</div><div class="bot-bbl">${html}</div>`;
+  $m().appendChild(d);
+  $m().scrollTop = $m().scrollHeight;
+}
+function addUser(text){
+  const d = document.createElement('div');
+  d.className = 'msg-user';
+  d.innerHTML = `<div class="user-bbl">${text}</div>`;
+  $m().appendChild(d);
+  $m().scrollTop = $m().scrollHeight;
+}
+function addWidget(html){
+  const d = document.createElement('div');
+  d.className = 'widget';
+  d.innerHTML = html;
+  $m().appendChild(d);
+  $m().scrollTop = $m().scrollHeight;
+}
+
+function goHome(){
+  // 첫 화면(ATIUM HR팀 센터 런처)으로 복귀
+  if(typeof closeGrievance==='function'){ try{ closeGrievance(); }catch(e){} }
+  // 뒤쪽 채팅은 초기 상태로 리셋 (재진입 시 깔끔하게 시작)
+  state='cats'; curCatIdx=null; curSubIdx=null;
+  $m().innerHTML='';
+  addBot(`안녕하세요! 저는 에이티움 <b>HR팀 AI사원 장하리 🤖</b> 입니다.<br>제가 준비한 카테고리를 눌러 궁금증을 해결하세요!`);
+  if(DATA && DATA.cats && DATA.cats.length){ showCats(); } else { loadFromGoogleSheets(); }
+  // 인트로(런처) 오버레이 다시 표시
+  const ov = document.getElementById('intro-overlay');
+  if(ov){ ov.style.display='flex'; ov.classList.remove('hide'); }
+}
+
+function showCats(){
+  state='cats'; curCatIdx=null; curSubIdx=null;
+  let g = '<div class="cat-grid">';
+  DATA.cats.forEach((c,i)=>{
+    g += `<button class="cat-btn" onclick="selectCat(${i})">${c.icon||''} ${c.label}</button>`;
+  });
+  g += '</div>';
+  addWidget(g);
+}
+
+function selectCat(i){
+  curCatIdx=i; state='subs';
+  const cat = DATA.cats[i];
+  trackEvent('cat_click', cat.label);
+  addUser(`${cat.icon||''} ${cat.label}`);
+  addBot(`<b>${cat.label}</b> 관련 항목을 선택해 주세요.`);
+  let html = `<button class="back-btn" onclick="showCats()">← 카테고리로</button>`;
+  html += `<div class="sub-list" style="margin-top:8px">`;
+  cat.subs.forEach((s,j)=>{
+    html += `<button class="sub-btn" onclick="selectSub(${j})">${s.label}</button>`;
+  });
+  html += `</div>`;
+  addWidget(html);
+}
+
+function selectSub(j){
+  curSubIdx=j; state='qs';
+  const cat = DATA.cats[curCatIdx];
+  const sub = cat.subs[j];
+  trackEvent('sub_click', cat.label, sub.label);
+  addUser(sub.label);
+  addBot(`<b>${sub.label}</b> 관련 자주 묻는 질문입니다.`);
+  let html = `<div class="nav-btns"><button class="back-btn" onclick="selectCat(${curCatIdx})">← 소카테고리로</button><button class="back-btn" onclick="showCats()">🏠 카테고리로</button></div>`;
+  html += `<div class="q-list" style="margin-top:8px">`;
+  sub.qs.forEach((q,k)=>{
+    html += `<button class="q-btn" onclick="selectQ(${k})">${q.q}</button>`;
+  });
+  html += `</div>`;
+  addWidget(html);
+}
+
+function selectQ(k){
+  state='ans';
+  const cat = DATA.cats[curCatIdx];
+  const sub = cat.subs[curSubIdx];
+  const q   = sub.qs[k];
+  trackEvent('q_click', cat.label, sub.label, q.q);
+  addUser(q.q);
+  let aHtml = `<div class="answer-box">${q.a.replace(/\n/g,'<br>')}</div>`;
+  if(q.info) aHtml += `<div class="info-box">ℹ️ ${q.info.replace(/\n/g,'<br>')}</div>`;
+  addBot(aHtml);
+  addWidget(`<div class="nav-btns">
+    <button class="back-btn" onclick="selectSub(${curSubIdx})">← 다른 질문 보기</button>
+    <button class="back-btn" onclick="selectCat(${curCatIdx})">↩ 소카테고리로</button>
+    <button class="back-btn" onclick="showCats()">🏠 카테고리로</button>
+  </div>`);
+}
+
+// ══════════════════════════════════════════════════════
+//  고충처리함 (종이비행기 → 인사팀 메일)
+// ══════════════════════════════════════════════════════
+const GRIEVANCE_URL = 'https://script.google.com/macros/s/AKfycbzMpZLZIrJ-VO7XMr0Tv3vfi1lOxkeNwIbanHaDbmPwUtesY52Vz8spIov6cLcXTKZMkA/exec';
+
+function openGrievance(){
+  resetGrievance();
+  document.getElementById('gr-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('gr-text').focus(), 100);
+}
+function closeGrievance(){
+  document.getElementById('gr-overlay').classList.remove('show');
+}
+function resetGrievance(){
+  document.getElementById('gr-form').style.display = 'flex';
+  document.getElementById('gr-success').style.display = 'none';
+  const ta = document.getElementById('gr-text');
+  ta.value = ''; ta.style.height = 'auto';
+  document.getElementById('gr-send').disabled = false;
+}
+function grAutoGrow(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+function grKey(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendGrievance(); }
+}
+function sendGrievance(){
+  const ta  = document.getElementById('gr-text');
+  const msg = ta.value.trim();
+  if(!msg){ ta.focus(); return; }
+
+  const btn = document.getElementById('gr-send');
+  btn.disabled = true;
+
+  try {
+    fetch(GRIEVANCE_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ message: msg, page: location.href })
+    });
+  } catch(e) {}
+
+  document.getElementById('gr-form').style.display = 'none';
+  document.getElementById('gr-success').style.display = 'block';
+}
+
+// ── Init ──
+addBot(`안녕하세요! 저는 에이티움 <b>HR팀 AI사원 장하리 🤖</b> 입니다.<br>데이터를 불러오는 중입니다...`);
+loadFromGoogleSheets();
+</script>
+</body>
+</html>
