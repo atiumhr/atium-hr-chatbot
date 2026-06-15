@@ -449,11 +449,11 @@ if (isIOS && !isInStandaloneMode) {
 // ══════════════════════════════════════════════════════
 //  GOOGLE SHEETS 연동 설정
 // ══════════════════════════════════════════════════════
-const SHEET_API_KEY = 'AIzaSyBxVKofJ9iGFFOZZVNZ3HfhlJbYij9s-NA';
-const SHEET_ID      = '1KQuKpjGLAoLV00_btBrXbv3QZ3C63DtgKAAEM52_Rjk';
+const SHEET_API_KEY = 'AIzaSyBvgprW6uTjhRWZgjtE6uKWKPtR4xvUIto';
+const SHEET_ID      = '1t5SHImRtDFLOy1Ku-DedYttTd9wu6HL1tUvodSBwMW4';
 const SHEET_NAME    = 'HR Chatbot DB';
 
-const TRACKER_URL = 'https://script.google.com/macros/s/AKfycbykKdkmsWyRwLBoPTwjzZH434SEIi_j2eChqZKBIF96sIBWxE6Ym0nT7S3z0t7corVR/exec';
+const TRACKER_URL = 'https://script.google.com/macros/s/AKfycbx_WlUMjZoqlIZ_ezZ4mfA2vLEMbYeP2mTncKwdodOiOfSw5VdFiQrFoRLSMCgP1Qaoww/exec';
 
 function trackEvent(eventType, category='', subCategory='', question='') {
   if (!TRACKER_URL || TRACKER_URL.startsWith('YOUR_')) return;
@@ -668,7 +668,7 @@ function selectQ(k){
 // ══════════════════════════════════════════════════════
 //  고충처리함 (종이비행기 → 인사팀 메일)
 // ══════════════════════════════════════════════════════
-const GRIEVANCE_URL = 'https://script.google.com/macros/s/AKfycbzMpZLZIrJ-VO7XMr0Tv3vfi1lOxkeNwIbanHaDbmPwUtesY52Vz8spIov6cLcXTKZMkA/exec';
+const GRIEVANCE_URL = 'https://script.google.com/macros/s/AKfycbzjgAcPQE2W1YVjeOXfmqzolBBrauF29vhEcwvF-seJW9Apwo5ywGJcfcMjKdisA4Q/exec';
 
 function openGrievance(){
   resetGrievance();
