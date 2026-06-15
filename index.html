@@ -941,22 +941,22 @@ async function renderCard(rec, canvas){
   // 이름 (좌측) + 직급(국문)
   const xName=0.10*W;
   const koPx=Math.round(8.2*PT);
-  drawSpaced(xName,0.40*H,rec.ko,EB(8.2),BLACK,0.10*koPx);
-  ctx.font=B(6); ctx.fillStyle=BLACK; ctx.fillText(rec.title||'',xName,0.515*H);
+  drawSpaced(xName,0.18*H,rec.ko,EB(8.2),BLACK,0.10*koPx);
+  ctx.font=B(6); ctx.fillStyle=BLACK; ctx.fillText(rec.title||'',xName,0.31*H);
 
   // 본부 / 부서 (우측 · 국문만)
   const xR=0.45*W;
   ctx.font=B(5.8); ctx.fillStyle=BLACK;
-  ctx.fillText(rec.div||'', xR, 0.30*H);
+  ctx.fillText(rec.div||'', xR, 0.19*H);
   if(rec.dept && rec.dept!==rec.div){
     ctx.font=R(5.8); ctx.fillStyle=BLACK;
-    ctx.fillText(rec.dept, xR, 0.385*H);
+    ctx.fillText(rec.dept, xR, 0.275*H);
   }
 
   // 연락처
   const labx=xR, valx=xR+0.085*W;
   const rows=[['Tel',CARD_COMPANY_TEL],['Mobile',fmtMobile(rec.mobile)],['Mail',rec.mail||'']];
-  let cy=0.52*H;
+  let cy=0.42*H;
   rows.forEach(([lab,val])=>{
     ctx.font=B(6); ctx.fillStyle=BLACK; ctx.fillText(lab,labx,cy);
     ctx.font=R(6); ctx.fillStyle=BLACK; ctx.fillText(val,valx,cy);
@@ -965,11 +965,11 @@ async function renderCard(rec, canvas){
 
   // 로고 (좌측 하단)
   const lw=0.165*W, lh=lw*logo.height/logo.width;
-  const lx=0.075*W, logoBottom=0.90*H, ly=logoBottom-lh;
+  const lx=0.075*W, logoBottom=0.80*H, ly=logoBottom-lh;
   ctx.drawImage(logo,lx,ly,lw,lh);
 
-  // 주소 (로고 우측 · 국문만 · 세로 중앙 정렬 · 폭 자동 맞춤)
-  const ax=lx+lw+0.025*W, maxw=0.95*W-ax;
+  // 주소 (우측 컬럼 정렬 · 로고와 간격 확대 · 국문만 · 세로 중앙 정렬)
+  const ax=xR, maxw=0.95*W-ax;
   const fKO=fitFont(R,CARD_ADDR_KO,maxw,5.5);
   const lineh=0.062*H, blockH=lineh*2;
   const ay=ly+(lh-blockH)/2+0.005*H;
