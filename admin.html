@@ -175,7 +175,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
       </div>
       <div style="font-size:11.5px;color:#64748b;line-height:1.7;margin-bottom:10px;">
         구글 시트를 수정하면 아래 <b>새로고침</b> 버튼을 눌러 데이터를 갱신하세요.<br>
-        <a href="https://docs.google.com/spreadsheets/d/1KQuKpjGLAoLV00_btBrXbv3QZ3C63DtgKAAEM52_Rjk/edit?gid=1537105553#gid=1537105553" target="_blank" style="color:#3b82f6;text-decoration:none;font-weight:600;">📄 구글 시트 열기 →</a>
+        <a href="https://docs.google.com/spreadsheets/d/1t5SHImRtDFLOy1Ku-DedYttTd9wu6HL1tUvodSBwMW4/edit" target="_blank" style="color:#3b82f6;text-decoration:none;font-weight:600;">📄 구글 시트 열기 →</a>
       </div>
       <button class="btn-primary" onclick="loadFromGoogleSheets()">🔄 구글 시트에서 새로고침</button>
       <div id="status-box"></div>
@@ -296,12 +296,12 @@ function checkPw(){
 // ══════════════════════════════════════════════════════
 //  GOOGLE SHEETS 연동 설정
 // ══════════════════════════════════════════════════════
-const SHEET_API_KEY = 'AIzaSyBxVKofJ9iGFFOZZVNZ3HfhlJbYij9s-NA';
-const SHEET_ID      = '1KQuKpjGLAoLV00_btBrXbv3QZ3C63DtgKAAEM52_Rjk';
+const SHEET_API_KEY = 'AIzaSyBvgprW6uTjhRWZgjtE6uKWKPtR4xvUIto';
+const SHEET_ID      = '1t5SHImRtDFLOy1Ku-DedYttTd9wu6HL1tUvodSBwMW4';
 const SHEET_NAME    = 'HR Chatbot DB';
 // Apps Script 웹 앱 기본 URL — localStorage가 비워져도 항상 자동으로 채워집니다.
 // URL이 새로 배포돼 바뀌면 이 한 줄만 교체하세요.
-const DEFAULT_TRACKER_URL = 'https://script.google.com/macros/s/AKfycbxRk9gSVLqVReNgHX7k7IaW_6SVRqjHetVz-pci9tHISdfq_nygUGBTaDV9ZOswzgIy/exec';
+const DEFAULT_TRACKER_URL = 'https://script.google.com/macros/s/AKfycbx_WlUMjZoqlIZ_ezZ4mfA2vLEMbYeP2mTncKwdodOiOfSw5VdFiQrFoRLSMCgP1Qaoww/exec';
 
 let DATA = { cats: [] };
 
