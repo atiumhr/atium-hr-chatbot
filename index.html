@@ -327,8 +327,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     <button id="grievance-btn" onclick="openGrievance()" title="고충처리함 · 종이비행기 보내기">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
-    <!-- 설치 버튼 (Android/Chrome 자동 표시) -->
-    <button id="install-btn" onclick="installApp()">⬇ 앱 설치</button>
   </div>
   <div id="msgs"></div>
 </div>
@@ -420,12 +418,12 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById('install-btn').classList.add('show');
+  document.getElementById('install-btn')?.classList.add('show');
 });
 
 // 설치 완료 시 버튼 숨기기
 window.addEventListener('appinstalled', () => {
-  document.getElementById('install-btn').classList.remove('show');
+  document.getElementById('install-btn')?.classList.remove('show');
   deferredPrompt = null;
 });
 
@@ -434,7 +432,7 @@ function installApp() {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(() => {
       deferredPrompt = null;
-      document.getElementById('install-btn').classList.remove('show');
+      document.getElementById('install-btn')?.classList.remove('show');
     });
   }
 }
