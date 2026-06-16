@@ -1074,18 +1074,15 @@ async function renderCardUnified(rec, canvas){
   const VX     = fx(X_VALUE);
   const maxRight = W - RX - fx(8);
 
-  // ───────────── 이름 (B2: 국문 윗줄 + 영문 아랫줄) ─────────────
-  const koName = (rec.ko||'').replace(/\s/g,'').split('').join(' ');
-  ctx.fillStyle = BLACK;
-  ctx.font = fitFont(EB, koName, RX - NAME_X - fx(4), 8.2);
-  ctx.fillText(koName, NAME_X, baseY(27, 8.2));
-  const enName = resolveEnName(rec);
-  if(enName){
-    ctx.font = B(7);
-    ctx.fillText(enName, NAME_X, baseY(27,8.2) + ptpx(8.2)*1.05);
-  }
+  // ═══════════ 상단 블록(이름·직책·부서·연락처) — 내부 간격 유지한 채 가로 중앙 정렬 ═══════════
+  // 로고/주소는 건드리지 않고, 이 블록만 하나로 묶어 명함 가로 중앙에 배치한다.
 
-  // ───────────── 직책 | 부서 (D2 국문 / D3 영문) ─────────────
+  // 이름 (국문 윗줄 + 영문 아랫줄)
+  const koName = (rec.ko||'').replace(/\s/g,'').split('').join(' ');
+  const nameKoFont = fitFont(EB, koName, RX - NAME_X - fx(4), 8.2);
+  const enName = resolveEnName(rec);
+
+  // 직책 | 부서 (국문/영문)
   const titleKO = rec.title || '';
   const deptFullKO = [rec.div, rec.dept].filter(Boolean).join(' ');
   const lineKO = [titleKO, deptFullKO].filter(Boolean).join(' | ');
@@ -1099,25 +1096,57 @@ async function renderCardUnified(rec, canvas){
     else deptFullEN = divEN + ' ' + deptEN;
   } else { deptFullEN = divEN || deptEN; }
   const lineEN = [titleEN, deptFullEN].filter(Boolean).join(' | ');
+  const deptKoFont = fitFont(B, lineKO, maxRight, 5.8);
+  const deptEnFont = fitFont(R, lineEN, maxRight, 5.8);
 
-  ctx.fillStyle = BLACK;
-  ctx.font = fitFont(B, lineKO, maxRight, 5.8);
-  ctx.fillText(lineKO, RX, baseY(27, 5.8));
-  if(lineEN){
-    ctx.font = fitFont(R, lineEN, maxRight, 5.8);
-    ctx.fillText(lineEN, RX, baseY(42, 5.8));
-  }
-
-  // ───────────── 연락처 (D5~E7) ─────────────
+  // 연락처
   const contactYs = rnd ? [69,85,100] : [65,80,96];
   const rows = [
     ['Tel',    CARD_COMPANY_TEL,      contactYs[0]],
     ['Mobile', fmtMobile(rec.mobile), contactYs[1]],
     ['Mail',   rec.mail||'',          contactYs[2]]
   ];
+
+  // ── 블록 경계 측정 → 가로 중앙 정렬용 이동량(shift) 계산 ──
+  // 좌측: 이름 컬럼(NAME_X) / 우측: 직책·연락처 컬럼(RX), 값 컬럼(VX)
+  const nameW = Math.max(
+    meas(koName, nameKoFont),
+    enName ? meas(enName, B(7)) : 0
+  );
+  let valW = 0;
+  rows.forEach(([,val])=>{ valW = Math.max(valW, meas(val, R(6))); });
+  const rightRel = (VX - RX) + valW;                 // RX 기준 연락처 값 끝
+  const blockLeft  = NAME_X;
+  const blockRight = Math.max(
+    NAME_X + nameW,
+    RX + meas(lineKO, deptKoFont),
+    lineEN ? RX + meas(lineEN, deptEnFont) : 0,
+    RX + rightRel
+  );
+  const blockW = blockRight - blockLeft;
+  const shift  = (W - blockW)/2 - blockLeft;          // 블록 중앙을 명함 중앙으로
+  const nX = NAME_X + shift, rX = RX + shift, vX = VX + shift;
+
+  // ── 그리기 (모든 X에 shift 적용) ──
+  // 이름
+  ctx.fillStyle = BLACK;
+  ctx.font = nameKoFont;
+  ctx.fillText(koName, nX, baseY(27, 8.2));
+  if(enName){
+    ctx.font = B(7);
+    ctx.fillText(enName, nX, baseY(27,8.2) + ptpx(8.2)*1.05);
+  }
+  // 직책 | 부서
+  ctx.font = deptKoFont;
+  ctx.fillText(lineKO, rX, baseY(27, 5.8));
+  if(lineEN){
+    ctx.font = deptEnFont;
+    ctx.fillText(lineEN, rX, baseY(42, 5.8));
+  }
+  // 연락처
   rows.forEach(([lab,val,gy])=>{
-    ctx.font = B(6); ctx.fillStyle = BLACK; ctx.fillText(lab, RX, baseY(gy,6));
-    ctx.font = R(6); ctx.fillStyle = BLACK; ctx.fillText(val, VX, baseY(gy,6));
+    ctx.font = B(6); ctx.fillStyle = BLACK; ctx.fillText(lab, rX, baseY(gy,6));
+    ctx.font = R(6); ctx.fillStyle = BLACK; ctx.fillText(val, vX, baseY(gy,6));
   });
 
   // ───────────── 주소 줄 구성 (영문 + 국문 항상 전체 표기) ─────────────
