@@ -271,8 +271,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     홈으로
   </button>
   <div class="co-inner">
-    <div class="co-title">명함 신청 📇</div>
-    <div class="co-sub">신청하실 전자 명함 종류를 선택해 주세요</div>
+    <div class="co-title">신청 📇</div>
+    <div class="co-sub">신청하실 서류 종류를 선택해 주세요</div>
     <div class="co-cards">
       <div class="co-card" onclick="selectCardType('국문 명함')">
         <div class="co-ic co-ic-blue">
@@ -284,22 +284,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
             <rect x="13" y="36" width="30" height="2.6" rx="1.3" fill="#bfe4fb"/>
           </svg>
         </div>
-        <div class="co-label">국문 명함</div>
-        <div class="co-desc">한글 전자 명함</div>
+        <div class="co-label">전자 명함</div>
+        <div class="co-desc"></div>
       </div>
 
       <div class="co-card" onclick="selectCardType('영문 명함')">
         <div class="co-ic co-ic-purple">
-          <svg viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="7" y="15" width="44" height="29" rx="5" fill="white" opacity="0.96"/>
-            <path d="M14 38 L18.5 22 L23 38 M15.6 33 H21.4" stroke="#8163e8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <rect x="29" y="23" width="16" height="3.2" rx="1.6" fill="#8163e8"/>
-            <rect x="29" y="30" width="12" height="3.2" rx="1.6" fill="#b9a4f5"/>
-            <rect x="29" y="37" width="14" height="2.8" rx="1.4" fill="#d6c9fa"/>
-          </svg>
+          <span style="font-size:58px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 5px rgba(0,0,0,.18);">?</span>
         </div>
-        <div class="co-label">영문 명함</div>
-        <div class="co-desc">영문(English) 전자 명함</div>
+        <div class="co-label">준비중</div>
       </div>
     </div>
     <div class="co-notice" id="co-notice"></div>
@@ -311,7 +304,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 <div id="namecard-modal">
   <div class="nc-box">
     <button class="nc-x" onclick="closeNameCard()">&#10005;</button>
-    <div class="nc-title">국문 전자명함 발급 &#128241;</div>
+    <div class="nc-title">전자명함 발급 &#128241;</div>
     <div class="nc-sub">이름을 입력하면 인사 DB에서 정보를 자동으로 불러옵니다.</div>
     <div class="nc-field">
       <label for="nc-name">이름</label>
@@ -918,7 +911,7 @@ async function openNameCard(){
   document.getElementById('nc-issue-btn').disabled=true;
   setNcStatus('인사 DB 불러오는 중…');
   setTimeout(()=>inp.focus(),200);
-  try{ await loadCardDB(); setNcStatus('이름을 입력해 주세요.'); }
+  try{ await loadCardDB(); setNcStatus('한글 이름을 입력해 주세요.'); }
   catch(e){ setNcStatus('⚠️ DB 로드 실패: '+e.message); }
 }
 function closeNameCard(){
