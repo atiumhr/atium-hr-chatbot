@@ -915,105 +915,92 @@ function loadCardLogo(){
   return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>{_cardLogoImg=im;res(im);}; im.onerror=rej; im.src=CARD_LOGO_SRC; });
 }
 
-// ── 명함 Canvas 렌더 (시안 규격: 567px 높이 기준 절대좌표) ──
+// ── 명함 Canvas 렌더 ──
 async function renderCard(rec, canvas){
-  // 시안 기준 캔버스: 폭 1020 × 높이 567 (90×50mm 비율), 2배 스케일 출력
-  const S = 2;
-  const BASE_W = 1020, BASE_H = 567;
-  const W = BASE_W * S, H = BASE_H * S;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  const px = v => v * S;            // 시안 px → 캔버스 px
-  const BLACK = '#141414';
-
-  // 폰트 크기(시안 px 기준) — 필요시 이 숫자만 조정
-  const F_NAME    = 64;   // 이름 (고 숙 경)
-  const F_TITLE   = 24;   // 부대표
-  const F_DIV     = 34;   // 경영부문 (볼드)
-  const F_DEPT    = 30;   // CFO | 부문장
-  const F_LABEL   = 30;   // Tel / Mobile / Mail
-  const F_VALUE   = 30;   // 값
-  const F_COMPANY = 30;   // (주)에이티움
-  const F_ADDR    = 28;   // 주소
-
-  const EB = p => `${Math.round(px(p))}px 'NSquareEB'`;
-  const B  = p => `${Math.round(px(p))}px 'NSquareB'`;
-  const R  = p => `${Math.round(px(p))}px 'NSquareR'`;
-  const meas = (t,f)=>{ ctx.font=f; return ctx.measureText(t).width; };
-
+  const S=2, W=1063*S, H=591*S, PT=300/72*S;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const BLACK='#141414', LINE='#969696';
+  const EB=pt=>`${Math.round(pt*PT)}px 'NSquareEB'`;
+  const B =pt=>`${Math.round(pt*PT)}px 'NSquareB'`;
+  const R =pt=>`${Math.round(pt*PT)}px 'NSquareR'`;
+  const meas=(t,f)=>{ctx.font=f; return ctx.measureText(t).width;};
   // 폰트/로고 준비
   await Promise.all([
-    document.fonts.load(EB(F_NAME),'한건 ABC'),
-    document.fonts.load(B(F_DIV),'한건 ABC'),
-    document.fonts.load(R(F_DEPT),'한건 ABC')
+    document.fonts.load(EB(8.2),'한건 ABC'), document.fonts.load(B(6),'한건 ABC'), document.fonts.load(R(6),'한건 ABC')
   ]);
   await document.fonts.ready;
   const logo = await loadCardLogo();
 
-  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
-  ctx.textAlign = 'left';
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  ctx.textBaseline='alphabetic'; ctx.textAlign='left';
 
-  const drawSpaced = (x,y,t,f,fill,sp)=>{ ctx.font=f; ctx.fillStyle=fill; for(const ch of t){ ctx.fillText(ch,x,y); x+=ctx.measureText(ch).width+sp; } return x; };
-  const fitFont = (maker,t,maxw,start)=>{ let p=start; while(p>5){ const f=maker(p); if(meas(t,f)<=maxw) return f; p-=0.5; } return maker(5); };
+  const fitFont=(maker,t,maxw,start)=>{let pt=start;while(pt>3.5){const f=maker(pt);if(meas(t,f)<=maxw)return f;pt-=0.1;}return maker(3.5);};
 
-  // ── 시안 좌표 (567px 높이 기준) ──
-  const X_NAME  = px(70);    // 이름 시작 (좌측 여백)
-  const X_LABEL = px(405);   // 우측 영역 / 라벨 컬럼 시작
-  const X_VALUE = px(544);   // 값 컬럼 시작 (라벨→값 139px)
+  // ── 명함 규격 (567px 높이 이미지 기준 → 렌더 변환) ──
+  const S2R=H/567;                              // 사양→렌더 배율
+  const SPECW=567*1.8;                          // 사양 카드 폭(=1020.6)
+  // 세로 행간(베이스라인 기준, px@567)
+  const G_NAME_TITLE=40*S2R, G_DIV_DEPT=40*S2R, G_DEPT_TEL=93*S2R,
+        G_TEL_MOB=38*S2R, G_MOB_MAIL=42*S2R, G_MAIL_CO=100*S2R, G_CO_ADDR=36*S2R;
+  // 가로 컬럼 x
+  const labelX=405/SPECW*W, valueX=544/SPECW*W;   // 라벨/값 컬럼
+  const nameLeft=0.064*W, GAP_NAME_DIV=160/SPECW*W;
 
-  // 세로 베이스라인 (시안 누적 간격, baseline 기준)
-  ctx.textBaseline = 'alphabetic';
-  const Y_NAME    = px(160);
-  const Y_TITLE   = Y_NAME + px(40);      // 이름 → 부대표 40px
-  const Y_DIV     = px(160);              // 경영부문 (이름과 같은 높이)
-  const Y_DEPT    = Y_DIV + px(40);       // 경영부문 → CFO 40px
-  const Y_TEL     = Y_DEPT + px(93);      // CFO → Tel 93px (섹션)
-  const Y_MOBILE  = Y_TEL + px(38);       // Tel → Mobile 38px
-  const Y_MAIL    = Y_MOBILE + px(42);    // Mobile → Mail 42px
-  const Y_COMPANY = Y_MAIL + px(100);     // Mail → (주)에이티움 100px (섹션)
-  const Y_ADDR    = Y_COMPANY + px(36);   // (주)에이티움 → 주소 36px
+  // 폰트
+  const fName=EB(8.2), fTitle=B(6), fDiv=B(5.8), fDept=R(5.8),
+        fLab=B(6), fVal=R(6), fCo=B(5.5);
 
-  // 이름 (좌측, 글자 간격 넓게) + 직급(국문)
-  const namePx = Math.round(px(F_NAME));
-  drawSpaced(X_NAME, Y_NAME, rec.ko, EB(F_NAME), BLACK, namePx*0.35);
-  ctx.font = B(F_TITLE); ctx.fillStyle = BLACK;
-  ctx.fillText(rec.title||'', X_NAME, Y_TITLE);
+  // 이름 글자 자간 (이름 끝이 본부 시작 160px 앞에 오도록 보정)
+  const chs=[...rec.ko];
+  ctx.font=fName;
+  const baseW=chs.reduce((s,c)=>s+ctx.measureText(c).width,0);
+  let nsp=((labelX-GAP_NAME_DIV)-nameLeft-baseW)/Math.max(chs.length-1,1);
+  if(nsp<0) nsp=0;
 
-  // 본부(경영부문) — 볼드 / 부서(CFO | 부문장)
-  ctx.font = B(F_DIV); ctx.fillStyle = BLACK;
-  ctx.fillText(rec.div||'', X_LABEL, Y_DIV);
-  if(rec.dept && rec.dept !== rec.div){
-    ctx.font = R(F_DEPT); ctx.fillStyle = BLACK;
-    ctx.fillText(rec.dept, X_LABEL, Y_DEPT);
-  }
+  // 베이스라인 좌표 (본부 baseline=0 기준)
+  const divBL=0, deptBL=divBL+G_DIV_DEPT, telBL=deptBL+G_DEPT_TEL,
+        mobBL=telBL+G_TEL_MOB, mailBL=mobBL+G_MOB_MAIL, coBL=mailBL+G_MAIL_CO, addrBL=coBL+G_CO_ADDR;
+  const nameBL=40*S2R, titleBL=nameBL+G_NAME_TITLE;
 
-  // 연락처 (라벨 x=405, 값 x=544)
-  const rows = [
-    ['Tel',    CARD_COMPANY_TEL,      Y_TEL],
-    ['Mobile', fmtMobile(rec.mobile), Y_MOBILE],
-    ['Mail',   rec.mail||'',          Y_MAIL]
-  ];
-  rows.forEach(([lab,val,y])=>{
-    ctx.font = B(F_LABEL); ctx.fillStyle = BLACK; ctx.fillText(lab, X_LABEL, y);
-    ctx.font = R(F_VALUE); ctx.fillStyle = BLACK; ctx.fillText(val, X_VALUE, y);
+  // 로고 크기 / 하단 = 주소 baseline
+  const lw=0.165*W, lh=lw*logo.height/logo.width, logoBottom=addrBL;
+
+  // 블록 수직 중앙정렬 오프셋
+  ctx.font=fName; const nm=ctx.measureText(rec.ko||'가');
+  const ascN=nm.fontBoundingBoxAscent||(8.2*PT*0.82);
+  ctx.font=R(5.5); const am=ctx.measureText(CARD_ADDR_KO);
+  const desA=am.fontBoundingBoxDescent||(5.5*PT*0.25);
+  const blkTop=nameBL-ascN, blkBot=Math.max(addrBL+desA, logoBottom);
+  const off=(H-(blkBot-blkTop))/2-blkTop;
+  const by=b=>b+off;
+
+  // 이름 + 직급(좌측)
+  let xn=nameLeft; ctx.font=fName; ctx.fillStyle=BLACK;
+  for(const c of chs){ ctx.fillText(c,xn,by(nameBL)); xn+=ctx.measureText(c).width+nsp; }
+  ctx.font=fTitle; ctx.fillStyle=BLACK; ctx.fillText(rec.title||'',nameLeft,by(titleBL));
+
+  // 본부 / 부서(우측)
+  ctx.font=fDiv; ctx.fillStyle=BLACK; ctx.fillText(rec.div||'',labelX,by(divBL));
+  if(rec.dept && rec.dept!==rec.div){ ctx.font=fDept; ctx.fillText(rec.dept,labelX,by(deptBL)); }
+
+  // 연락처
+  [['Tel',CARD_COMPANY_TEL,telBL],['Mobile',fmtMobile(rec.mobile),mobBL],['Mail',rec.mail||'',mailBL]]
+  .forEach(([lab,val,b])=>{
+    ctx.font=fLab; ctx.fillStyle=BLACK; ctx.fillText(lab,labelX,by(b));
+    ctx.font=fVal; ctx.fillStyle=BLACK; ctx.fillText(val,valueX,by(b));
   });
 
-  // (주)에이티움 + 주소 (우측 라벨 컬럼 정렬)
-  ctx.font = B(F_COMPANY); ctx.fillStyle = BLACK;
-  ctx.fillText('(주)에이티움', X_LABEL, Y_COMPANY);
-  const maxw = px(BASE_W) - X_LABEL - px(20);
-  const fAddr = fitFont(R, CARD_ADDR_KO, maxw, F_ADDR);
-  ctx.font = fAddr; ctx.fillStyle = BLACK;
-  ctx.fillText(CARD_ADDR_KO, X_LABEL, Y_ADDR);
+  // 회사명 / 주소(우측)
+  ctx.font=fCo; ctx.fillStyle=BLACK; ctx.fillText('(주)에이티움',labelX,by(coBL));
+  const fAddr=fitFont(R,CARD_ADDR_KO,0.95*W-labelX,5.5);
+  ctx.font=fAddr; ctx.fillStyle=BLACK; ctx.fillText(CARD_ADDR_KO,labelX,by(addrBL));
 
-  // 로고 (좌측 하단) — 회사명/주소 영역과 세로 정렬
-  const lw = px(290), lh = lw * logo.height / logo.width;
-  const lx = X_NAME;
-  const ly = Y_COMPANY - lh*0.55;
-  ctx.drawImage(logo, lx, ly, lw, lh);
+  // 로고(좌측 하단 · 하단=주소 baseline)
+  ctx.drawImage(logo,nameLeft,by(logoBottom)-lh,lw,lh);
 
   // 외곽 보더
-  ctx.strokeStyle = '#e4e4e4'; ctx.lineWidth = 2; ctx.strokeRect(1,1,W-2,H-2);
+  ctx.strokeStyle='#e4e4e4'; ctx.lineWidth=2; ctx.strokeRect(1,1,W-2,H-2);
 }
 
 // ── 미리보기 ──
