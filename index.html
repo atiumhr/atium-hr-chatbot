@@ -801,7 +801,7 @@ const CARD_COMPANY_TEL = '+82 2 593 3625';              // 대표 전화 (시안
 const CARD_ADDR_EN     = '413, Nonhyeon-ro, Gangnam-gu, Seoul, Republic of Korea (06247)';
 const CARD_ADDR_KO     = '서울특별시 강남구 논현로 413 (우: 06247)';
 // 명함 하단 주소 블록 (가이드 기준) — 본사(전 직원 공통) / 연구소(R&D 추가)
-const ADDR_HQ_EN   = 'ATIUM 413, Nonhyeon-ro, Gangnam-gu, Seoul, Republic of Korea.';
+const ADDR_HQ_EN   = 'ATIUM 413, Nonhyeon-ro, Gangnam-gu, Seoul, Republic of Korea (06247)';
 const ADDR_HQ_KO   = '(주)에이티움 본사 서울특별시 강남구 논현로 413 (우: 06247)';
 const ADDR_RND_EN  = 'ATIUM R&D 27, Dongtancheomdansaneop 1-ro, Hwaseong-si, Gyeonggi-do, Republic of Korea';
 const ADDR_RND_KO  = '(주)에이티움 연구소 경기 화성시 동탄첨단산업1로 27, B동 21층 2134호~2138호 (우: 18469)';
@@ -1121,36 +1121,50 @@ async function renderCardUnified(rec, canvas){
     ctx.font = R(6); ctx.fillStyle = BLACK; ctx.fillText(val, VX, baseY(gy,6));
   });
 
-  // ───────────── 로고 (좌측 하단) ─────────────
-  // 좌측 컬럼(이름 영역, 엑셀 A~C열 ≈ x<114) 안에 머물도록 폭 제한.
-  const leftColRight = fx(114) - fx(8);              // 우측 컬럼 시작 전 여백
-  let lw = leftColRight - NAME_X;
-  let lh = lw * logo.height / logo.width;
-  const logoY = H - lh - fy(8);                       // 하단 정렬(살짝 여백)
-  ctx.drawImage(logo, NAME_X, logoY, lw, lh);
-
-  // ───────────── 주소 (우측 하단) ─────────────
-  // R&D: 본사(영/국) + 연구소(영/국) 4줄 (D9~D12)
-  // 일반: 본사(영/국) 2줄 (D9~D10)
-  let addrLines = parseAddrLines(rec.addr);
-  if(!addrLines.length){
-    addrLines = rnd ? [ADDR_HQ_EN, ADDR_HQ_KO, ADDR_RND_EN, ADDR_RND_KO]
-                    : [ADDR_HQ_EN, ADDR_HQ_KO];
-  } else if(!rnd){
-    addrLines = addrLines.slice(0,2);
+  // ───────────── 주소 줄 구성 (영문 + 국문 항상 병기) ─────────────
+  // 시트 addr 컬럼에 일부 언어만 들어와도, 빠진 언어는 상수로 보강한다.
+  // R&D: 본사(영/국) + 연구소(영/국) 4줄 / 일반: 본사(영/국) 2줄
+  const sheetLines = parseAddrLines(rec.addr);
+  const sheetEN = sheetLines.filter(l=>!/[가-힣]/.test(l));
+  const sheetKO = sheetLines.filter(l=> /[가-힣]/.test(l));
+  // 본사
+  const hqEN = sheetEN[0] || ADDR_HQ_EN;
+  const hqKO = sheetKO[0] || ADDR_HQ_KO;
+  let addrLines = [hqEN, hqKO];
+  if(rnd){
+    // 연구소: 시트에 두 번째 영문/국문이 있으면 사용, 없으면 상수
+    const rndEN = sheetEN[1] || ADDR_RND_EN;
+    const rndKO = sheetKO[1] || ADDR_RND_KO;
+    addrLines = [hqEN, hqKO, rndEN, rndKO];
   }
+
+  // ───────────── 주소·로고 하단 밴드 배치 (이미지처럼 나란히/세로 정렬) ─────────────
   const addrMaxw = W - RX - fx(6);
-  // 엑셀 y좌표(px): R&D 133/143/153/163, 일반 133/148
-  const addrYs = rnd ? [133,143,153,163] : [133,148];
-  // 엑셀 글꼴: R&D 본사국문(D10)만 4.7pt, 나머지 5.5pt. 일반은 모두 5.5pt.
-  const addrPt = rnd ? [5.5,4.7,5.5,5.5] : [5.5,5.5];
-  addrLines.slice(0, addrYs.length).forEach((line,i)=>{
+  const addrPt   = rnd ? [5.5,5.5,5.5,5.5] : [5.5,5.5];   // 전부 동일 크기(가독성)
+  const lineGap  = ptpx(5.5) * 1.55;                       // 주소 줄 간격
+  const blockH   = lineGap * addrLines.length;             // 주소 블록 전체 높이
+  // 주소 블록을 하단 영역에 배치 (엑셀 첫 주소줄 y=133 기준으로 시작)
+  const addrTop  = fy(rnd ? 130 : 138);                    // 블록 상단 y
+  const firstBase= addrTop + ptpx(5.5)*0.82;               // 첫 줄 baseline
+
+  addrLines.forEach((line,i)=>{
     const isKO = /[가-힣]/.test(line);
     const startPt = addrPt[i];
     ctx.font = fitFont(isKO?B:R, line, addrMaxw, startPt);
     ctx.fillStyle = BLACK;
-    ctx.fillText(line, RX, baseY(addrYs[i], startPt));
+    ctx.fillText(line, RX, firstBase + lineGap*i);
   });
+
+  // ───────────── 로고 (좌측 하단) — 주소 블록과 세로 중앙 정렬 ─────────────
+  const leftColRight = fx(114) - fx(10);             // 우측(주소) 컬럼 시작 전 여백
+  const lw = leftColRight - NAME_X;                   // 좌측 컬럼 폭에 맞춤
+  const lh = lw * logo.height / logo.width;
+  // 주소 블록의 세로 중앙에 로고 중앙을 맞춰 나란히 보이도록
+  const blockTop = addrTop;
+  const blockBottom = addrTop + blockH;
+  const blockMidY = (blockTop + blockBottom) / 2;
+  const logoY = blockMidY - lh/2;
+  ctx.drawImage(logo, NAME_X, logoY, lw, lh);
   // 외곽 테두리/가이드선 없음 — 미리보기·PNG 모두 깔끔.
 }
 
