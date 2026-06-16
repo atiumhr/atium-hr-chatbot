@@ -467,7 +467,7 @@ function closeCardRequest(){
 function selectCardType(type){
   if(type==='국문 명함'){ closeCardRequest(); openNameCard(); return; }
   const n = document.getElementById('co-notice');
-  if(n){ n.textContent = type + ' 신청 기능은 준비 중입니다 🛠️'; n.classList.add('show'); }
+  if(n){ n.textContent = '이 기능은 준비 중입니다 🛠️'; n.classList.add('show'); }
 }
 // 인트로의 "앱 다운로드" 버튼 → 헤더 설치 버튼과 동일한 PWA 설치 흐름
 function introInstall(){
