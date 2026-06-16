@@ -137,6 +137,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .co-back{position:absolute;top:24px;left:24px;z-index:2;display:inline-flex;align-items:center;gap:5px;background:#fff;border:none;border-radius:50px;padding:9px 16px 9px 12px;cursor:pointer;box-shadow:0 4px 16px rgba(100,140,255,.18);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:#6c8fff;transition:transform .18s;}
 .co-back:hover{transform:translateX(-3px);}
 .co-back svg{width:15px;height:15px;}
+
+/* 채팅(해결하리) 화면 — 페이지 좌측 상단 여백의 홈으로 버튼.
+   명함 신청 화면(.co-back)과 동일 디자인, 컬러만 해결하리 톤(파란색)으로 */
+#chat-back{display:none;position:fixed;top:20px;left:20px;z-index:2000;align-items:center;gap:5px;background:#fff;border:none;border-radius:50px;padding:9px 16px 9px 12px;cursor:pointer;box-shadow:0 4px 16px rgba(30,64,175,.22);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:#2563eb;transition:transform .18s;}
+#chat-back.show{display:inline-flex;}
+#chat-back:hover{transform:translateX(-3px);}
+#chat-back svg{width:15px;height:15px;}
 .co-title{font-size:26px;font-weight:900;color:#3a3a5c;margin-bottom:8px;}
 .co-sub{font-size:14px;color:#8888aa;font-weight:600;margin-bottom:38px;}
 .co-cards{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;}
@@ -321,6 +328,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
   </div>
 </div>
 
+<!-- 채팅(해결하리) 화면 좌측 상단 여백 홈으로 버튼 -->
+<button id="chat-back" onclick="goHome()" title="첫 화면으로">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 5 L8 12 L15 19" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  홈으로
+</button>
+
 <div id="wrap">
   <div id="hdr">
     <svg id="hdr-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
@@ -379,10 +392,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
       <div id="hdr-title">HR팀 AI사원 장하리(HR+AI) 🤖</div>
       <div id="hdr-sub">임직원 문의 응대 시스템 · 에이티움 전용</div>
     </div>
-    <!-- 홈 (첫 화면으로) -->
-    <button id="home-btn" onclick="goHome()" title="첫 화면으로">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 L12 3 L21 10.5"/><path d="M5 9.5 V20 H19 V9.5"/><path d="M9.5 20 V14 H14.5 V20"/></svg>
-    </button>
     <!-- 고충처리함 (종이비행기) -->
     <button id="grievance-btn" onclick="openGrievance()" title="고충처리함 · 종이비행기 보내기">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -441,6 +450,8 @@ function enterChatbot(){
   const ov = document.getElementById('intro-overlay');
   ov.classList.add('hide');
   setTimeout(()=>{ ov.style.display='none'; }, 600);
+  const cb = document.getElementById('chat-back');
+  if(cb) cb.classList.add('show');
 }
 
 // ── 명함 신청 화면 제어 ──
@@ -449,10 +460,16 @@ function openCardRequest(){
   if(ov){ ov.style.display='flex'; requestAnimationFrame(()=>ov.classList.add('show')); }
   const n = document.getElementById('co-notice');
   if(n){ n.classList.remove('show'); n.textContent=''; }
+  // 명함 신청 화면엔 자체 '홈으로' 버튼이 있으므로 채팅용 버튼은 숨김
+  const cb = document.getElementById('chat-back');
+  if(cb) cb.classList.remove('show');
 }
 function closeCardRequest(){
   const ov = document.getElementById('card-overlay');
   if(ov){ ov.classList.remove('show'); setTimeout(()=>{ ov.style.display='none'; }, 400); }
+  // 명함 신청은 인트로에서 바로 진입하므로, 닫으면 인트로로 복귀 → 채팅 버튼 숨김 유지
+  const cb = document.getElementById('chat-back');
+  if(cb) cb.classList.remove('show');
 }
 function selectCardType(type){
   if(type==='국문 명함'){ closeCardRequest(); openNameCard(); return; }
@@ -664,6 +681,9 @@ function goHome(){
   // 인트로(런처) 오버레이 다시 표시
   const ov = document.getElementById('intro-overlay');
   if(ov){ ov.style.display='flex'; ov.classList.remove('hide'); }
+  // 인트로로 돌아왔으니 채팅용 홈으로 버튼 숨김
+  const cb = document.getElementById('chat-back');
+  if(cb) cb.classList.remove('show');
 }
 
 function showCats(){
