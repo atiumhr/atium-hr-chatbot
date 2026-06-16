@@ -1023,120 +1023,137 @@ async function renderCard(rec, canvas){
   return renderCardUnified(rec, canvas);
 }
 
-// ── 통합 명함 렌더 [전 직원: 국·영문 병기 · 직급/부서/본부 영문 · 주소 블록] ──
-// 가이드(1·2번) 실측 좌표 기준. R&D는 주소 2블록(본사+연구소), 그 외는 1블록(본사).
+// ── 통합 명함 렌더 [엑셀 명함규격 레이아웃 기준 · 90×50mm] ──
+// R&D 센터: "R&D 명함규격" (본사+연구소 주소 4줄)
+// 그 외 부서: "일반 명함규격" (본사 주소 2줄)
+// 폰트: 나눔스퀘어OTF (EB/B/R), PNG에 외곽 테두리 없음.
 async function renderCardUnified(rec, canvas){
-  const S = 2;
-  const BASE_W = 1020, BASE_H = 567;
-  const W = BASE_W * S, H = BASE_H * S;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  const px = v => v * S;
-  const BLACK = '#141414';
   const rnd = isRnd(rec);
 
-  // 폰트 크기 (가이드 실측)
-  const F_NAME_KO = 40;  // 이름 국문 (김 기 수)
-  const F_NAME_EN = 31;  // 이름 영문 (KI SOO, KIM)
-  const F_DEPT_KO = 23;  // 직책·부서·본부 국문
-  const F_DEPT_EN = 21;  // 직책·부서·본부 영문
-  const F_LABEL   = 26;  // Tel/Mobile/Mail
-  const F_VALUE   = 26;
-  const F_ADDR_EN = 19;  // 주소 영문
-  const F_ADDR_KO = 19;  // 주소 국문
+  // ── 캔버스: 90×50mm, 고해상도(1mm=12px) ──
+  const MM = 12;                 // px per mm (해상도)
+  const CARD_W_MM = 90, CARD_H_MM = 50;
+  const W = Math.round(CARD_W_MM*MM);  // 1080
+  const H = Math.round(CARD_H_MM*MM);  // 600
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const BLACK = '#1A1A1A';
 
-  const EB = p => `${Math.round(px(p))}px 'NSquareEB'`;
-  const B  = p => `${Math.round(px(p))}px 'NSquareB'`;
-  const R  = p => `${Math.round(px(p))}px 'NSquareR'`;
+  // 엑셀 격자 기준 좌표(px) → 정규화 비율. 엑셀 카드 박스 R&D 413×218 / 일반 418×215.
+  // 비율을 그대로 90×50 캔버스에 매핑한다.
+  const GW = rnd ? 413 : 418, GH = rnd ? 218 : 215;
+  const fx = gx => (gx/GW)*W;    // 엑셀 x(px) → 캔버스 x
+  const fy = gy => (gy/GH)*H;    // 엑셀 y(px) → 캔버스 y
+  // 엑셀 pt(글꼴) → 캔버스 px. 1pt = 1.3333px(@96dpi), 격자→캔버스 세로 스케일 보정.
+  const ptpx = pt => pt*1.3333*(H/GH);
+
+  // 폰트 패밀리 헬퍼 (나눔스퀘어OTF)
+  const EB = pt => `${ptpx(pt)}px 'NSquareEB'`;   // ExtraBold
+  const B  = pt => `${ptpx(pt)}px 'NSquareB'`;     // Bold
+  const R  = pt => `${ptpx(pt)}px 'NSquareR'`;     // Regular
   const meas = (t,f)=>{ ctx.font=f; return ctx.measureText(t).width; };
+  const fitFont = (maker,t,maxw,startPt)=>{ let p=startPt; while(p>3){ const f=maker(p); if(meas(t,f)<=maxw) return f; p-=0.2; } return maker(3); };
 
+  // 폰트 프리로드
   await Promise.all([
-    document.fonts.load(EB(F_NAME_KO),'한건 ABC'),
-    document.fonts.load(B(F_DEPT_KO),'한건 ABC'),
-    document.fonts.load(R(F_DEPT_EN),'한건 ABC')
+    document.fonts.load(EB(8.2),'가나ABC'),
+    document.fonts.load(B(6),'가나ABC'),
+    document.fonts.load(R(6),'가나ABC')
   ]);
   await document.fonts.ready;
   const logo = await loadCardLogo();
 
+  // 배경 (테두리 없음)
   ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 
-  const drawSpaced = (x,y,t,f,fill,sp)=>{ ctx.font=f; ctx.fillStyle=fill; for(const ch of t){ ctx.fillText(ch,x,y); x+=ctx.measureText(ch).width+sp; } return x; };
-  const fitFont = (maker,t,maxw,start)=>{ let p=start; while(p>5){ const f=maker(p); if(meas(t,f)<=maxw) return f; p-=0.5; } return maker(5); };
+  // 엑셀 좌표는 셀의 '좌상단'. 텍스트 baseline 보정을 위해 글꼴 높이의 약 0.82를 더한다.
+  const baseY = (gy, pt) => fy(gy) + ptpx(pt)*0.82;
 
-  // ── 좌표 (가이드 1020×567 실측) ──
-  const X_NAME  = px(23);    // 좌측: 이름/로고
-  const X_LABEL = px(428);   // 우측 컬럼: 직책/연락처/주소
-  const X_VALUE = px(545);   // 연락처 값
-
-  // 이름: 국문(윗줄) + 영문(아랫줄)
-  const koName = (rec.ko||'').replace(/\s/g,'');
-  const koPx = Math.round(px(F_NAME_KO));
-  drawSpaced(X_NAME, px(92), koName, EB(F_NAME_KO), BLACK, koPx*0.34);
+  // ───────────── 이름 (좌측, 국문 윗줄 + 영문 아랫줄) B2 ─────────────
+  const koName = (rec.ko||'').replace(/\s/g,'').split('').join(' '); // 자간(김 세 진)
+  const NAME_X = fx(20);
+  ctx.fillStyle = BLACK;
+  ctx.font = EB(8.2);
+  ctx.fillText(koName, NAME_X, baseY(20, 8.2));
   const enName = resolveEnName(rec);
-  if(enName){ ctx.font = B(F_NAME_EN); ctx.fillStyle = BLACK; ctx.fillText(enName, X_NAME, px(152)); }
+  if(enName){
+    ctx.font = B(7);                 // 영문 이름은 약간 작게 (시각 균형)
+    ctx.fillText(enName, NAME_X, baseY(20,8.2) + ptpx(8.2)*1.05);
+  }
 
-  // 직책 · (본부+부서) — 국문 윗줄 / 영문 아랫줄  ※ 본부·부서 모두 영문 표기 (요청)
+  // ───────────── 직책 | 부서 (우측 상단) D2(국문)/D3(영문) ─────────────
+  const RX = fx(114);                          // 우측 컬럼 기준 x
+  const maxRight = W - RX - fx(8);             // 우측 여백
   const titleKO = rec.title || '';
   const deptFullKO = [rec.div, rec.dept].filter(Boolean).join(' ');
-  const lineKO  = [titleKO, deptFullKO].filter(Boolean).join(' | ');
+  const lineKO = [titleKO, deptFullKO].filter(Boolean).join(' | ');
+
   const titleEN = enOf(TITLE_EN, rec.title);
   const divEN   = enOf(DIV_EN,  rec.div);
   const deptEN  = enOf(DEPT_EN, rec.dept);
-  // 본부·부서 영문 결합 (한쪽이 다른 쪽에 포함되면 중복 제거)
   let deptFullEN = '';
   if(divEN && deptEN){
     if(divEN===deptEN || deptEN.includes(divEN)) deptFullEN = deptEN;
     else if(divEN.includes(deptEN)) deptFullEN = divEN;
     else deptFullEN = divEN + ' ' + deptEN;
-  } else {
-    deptFullEN = divEN || deptEN;
-  }
-  const lineEN  = [titleEN, deptFullEN].filter(Boolean).join(' | ');
-  const maxLine = px(BASE_W) - X_LABEL - px(18);
+  } else { deptFullEN = divEN || deptEN; }
+  const lineEN = [titleEN, deptFullEN].filter(Boolean).join(' | ');
+
   ctx.fillStyle = BLACK;
-  ctx.font = fitFont(B, lineKO, maxLine, F_DEPT_KO);
-  ctx.fillText(lineKO, X_LABEL, px(76));
-  if(lineEN){ ctx.font = fitFont(R, lineEN, maxLine, F_DEPT_EN); ctx.fillText(lineEN, X_LABEL, px(108)); }
+  ctx.font = fitFont(B, lineKO, maxRight, 5.8);
+  ctx.fillText(lineKO, RX, baseY(20, 5.8));
+  if(lineEN){
+    ctx.font = fitFont(R, lineEN, maxRight, 5.8);
+    ctx.fillText(lineEN, RX, baseY(39, 5.8));
+  }
 
-
-  // 연락처
+  // ───────────── 연락처 D5~E7 ─────────────
+  const VX = fx(157);                          // 값 컬럼 x
   const rows = [
-    ['Tel',    CARD_COMPANY_TEL,      px(241)],
-    ['Mobile', fmtMobile(rec.mobile), px(284)],
-    ['Mail',   rec.mail||'',          px(330)]
+    ['Tel',    CARD_COMPANY_TEL,      66],
+    ['Mobile', fmtMobile(rec.mobile), 82],
+    ['Mail',   rec.mail||'',          97]
   ];
-  rows.forEach(([lab,val,y])=>{
-    ctx.font = B(F_LABEL); ctx.fillStyle = BLACK; ctx.fillText(lab, X_LABEL, y);
-    ctx.font = R(F_VALUE); ctx.fillStyle = BLACK; ctx.fillText(val, X_VALUE, y);
+  rows.forEach(([lab,val,gy])=>{
+    ctx.font = B(6); ctx.fillStyle = BLACK; ctx.fillText(lab, RX, baseY(gy,6));
+    ctx.font = R(6); ctx.fillStyle = BLACK; ctx.fillText(val, VX, baseY(gy,6));
   });
 
-  // 로고 (좌측 하단)
-  const lw = px(250), lh = lw * logo.height / logo.width;
-  ctx.drawImage(logo, X_NAME, px(432), lw, lh);
+  // ───────────── 로고 (좌측 하단) ─────────────
+  // 좌측 컬럼(이름 영역, 엑셀 A~C열 ≈ x<114) 안에 머물도록 폭 제한.
+  const leftColRight = fx(114) - fx(8);              // 우측 컬럼 시작 전 여백
+  let lw = leftColRight - NAME_X;
+  let lh = lw * logo.height / logo.width;
+  const logoY = H - lh - fy(8);                       // 하단 정렬(살짝 여백)
+  ctx.drawImage(logo, NAME_X, logoY, lw, lh);
 
-  // 주소 (우측 하단) — R&D: 본사+연구소 2블록 / 그 외: 본사 1블록
-  // 시트 addr 컬럼에 값이 있으면 그것을 우선 사용(줄 자동분리), 없으면 상수 기본값.
+  // ───────────── 주소 (우측 하단) ─────────────
+  // R&D: 본사(영/국) + 연구소(영/국) 4줄 (D9~D12)
+  // 일반: 본사(영/국) 2줄 (D9~D10)
   let addrLines = parseAddrLines(rec.addr);
   if(!addrLines.length){
     addrLines = rnd ? [ADDR_HQ_EN, ADDR_HQ_KO, ADDR_RND_EN, ADDR_RND_KO]
                     : [ADDR_HQ_EN, ADDR_HQ_KO];
   } else if(!rnd){
-    addrLines = addrLines.slice(0,2);   // 비R&D는 본사 1블록(2줄)만
+    addrLines = addrLines.slice(0,2);
   }
-  const maxw = px(BASE_W) - X_LABEL - px(18);
-  // 블록 배치: 영문/국문 한 쌍 간격 24px, 블록 사이 32px
-  const ys = rnd ? [px(444), px(468), px(500), px(524)]
-                 : [px(470), px(498)];
-  addrLines.slice(0, ys.length).forEach((line,i)=>{
+  const addrMaxw = W - RX - fx(6);
+  // 엑셀 y좌표(px): R&D 133/143/153/163, 일반 133/148
+  const addrYs = rnd ? [133,143,153,163] : [133,148];
+  // 엑셀 글꼴: R&D 본사국문(D10)만 4.7pt, 나머지 5.5pt. 일반은 모두 5.5pt.
+  const addrPt = rnd ? [5.5,4.7,5.5,5.5] : [5.5,5.5];
+  addrLines.slice(0, addrYs.length).forEach((line,i)=>{
     const isKO = /[가-힣]/.test(line);
-    ctx.font = fitFont(isKO?B:R, line, maxw, isKO?F_ADDR_KO:F_ADDR_EN);
+    const startPt = addrPt[i];
+    ctx.font = fitFont(isKO?B:R, line, addrMaxw, startPt);
     ctx.fillStyle = BLACK;
-    ctx.fillText(line, X_LABEL, ys[i]);
+    ctx.fillText(line, RX, baseY(addrYs[i], startPt));
   });
-  // 가이드선/외곽 보더 없음 (미리보기·PNG 모두 깔끔)
+  // 외곽 테두리/가이드선 없음 — 미리보기·PNG 모두 깔끔.
 }
+
 
 // ── 미리보기 ──
 async function ncPreview(){
