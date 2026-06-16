@@ -1124,26 +1124,26 @@ async function renderCardUnified(rec, canvas){
     RX + rightRel
   );
   const blockW = blockRight - blockLeft;
-  const shift  = (W - blockW)/2 - blockLeft;          // 블록 중앙을 명함 중앙으로
-  const nX = NAME_X + shift, rX = RX + shift, vX = VX + shift;
+  const shift  = (W - blockW)/2 - blockLeft;          // 직책·연락처 블록 중앙을 명함 중앙으로
+  const rX = RX + shift, vX = VX + shift;             // 이름은 NAME_X(로고 좌측)에 고정
 
-  // ── 그리기 (모든 X에 shift 적용) ──
-  // 이름
+  // ── 그리기 (직책·연락처는 shift로 가로 중앙 / 이름은 로고와 좌측 정렬) ──
+  // 이름 — 첫 글자 왼쪽 끝을 로고 왼쪽 끝(NAME_X)과 세로로 맞춘다.
   ctx.fillStyle = BLACK;
   ctx.font = nameKoFont;
-  ctx.fillText(koName, nX, baseY(27, 8.2));
+  ctx.fillText(koName, NAME_X, baseY(27, 8.2));
   if(enName){
     ctx.font = B(7);
-    ctx.fillText(enName, nX, baseY(27,8.2) + ptpx(8.2)*1.05);
+    ctx.fillText(enName, NAME_X, baseY(27,8.2) + ptpx(8.2)*1.05);
   }
-  // 직책 | 부서
+  // 직책 | 부서 (중앙 정렬 유지)
   ctx.font = deptKoFont;
   ctx.fillText(lineKO, rX, baseY(27, 5.8));
   if(lineEN){
     ctx.font = deptEnFont;
     ctx.fillText(lineEN, rX, baseY(42, 5.8));
   }
-  // 연락처
+  // 연락처 (중앙 정렬 유지)
   rows.forEach(([lab,val,gy])=>{
     ctx.font = B(6); ctx.fillStyle = BLACK; ctx.fillText(lab, rX, baseY(gy,6));
     ctx.font = R(6); ctx.fillStyle = BLACK; ctx.fillText(val, vX, baseY(gy,6));
