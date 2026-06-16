@@ -964,14 +964,14 @@ async function renderCardKO(rec, canvas){
   const BLACK = '#141414';
 
   // 폰트 크기(시안 px 기준) — 원본 명함 실측 캡높이에 맞춰 보정
-  const F_NAME    = 70;   // 이름 (고 숙 경)   캡높이 ≈ 64px
-  const F_TITLE   = 25;   // 부대표            캡높이 ≈ 18px
-  const F_DIV     = 36;   // 경영부문 (볼드)    캡높이 ≈ 33px
-  const F_DEPT    = 30;   // CFO | 부문장      캡높이 ≈ 18px
-  const F_LABEL   = 30;   // Tel / Mobile / Mail
-  const F_VALUE   = 30;   // 값
-  const F_COMPANY = 36;   // (주)에이티움       캡높이 ≈ 29px
-  const F_ADDR    = 28;   // 주소              캡높이 ≈ 17px
+  const F_NAME    = 67;   // 이름 (고 숙 경)   시안 규격
+  const F_TITLE   = 32;   // 부대표
+  const F_DIV     = 38;   // 경영부문 (볼드)
+  const F_DEPT    = 26;   // CFO | 부문장
+  const F_LABEL   = 33;   // Tel / Mobile / Mail
+  const F_VALUE   = 33;   // 값
+  const F_COMPANY = 34;   // (주)에이티움
+  const F_ADDR    = 33;   // 주소
 
   const EB = p => `${Math.round(px(p))}px 'NSquareEB'`;
   const B  = p => `${Math.round(px(p))}px 'NSquareB'`;
@@ -994,26 +994,26 @@ async function renderCardKO(rec, canvas){
   const fitFont = (maker,t,maxw,start)=>{ let p=start; while(p>5){ const f=maker(p); if(meas(t,f)<=maxw) return f; p-=0.5; } return maker(5); };
 
   // ── 좌표 (원본 명함 1020×567 실측 절대 베이스라인) ──
-  const X_NAME  = px(68);    // 이름 시작 (좌측 여백)
-  const X_LABEL = px(411);   // 우측 영역 / 라벨 컬럼 시작
-  const X_VALUE = px(544);   // 값 컬럼 시작
+  const X_NAME  = px(16);    // 이름 시작 (좌측 여백)
+  const X_LABEL = px(400);   // 우측 영역 / 라벨 컬럼 시작 (시안 세로 분할선)
+  const X_VALUE = px(550);   // 값 컬럼 시작
 
   // 세로 베이스라인 (원본 글자 아랫변 실측, baseline 기준)
   ctx.textBaseline = 'alphabetic';
-  const Y_NAME    = px(164);              // 이름 아랫변
-  const Y_TITLE   = px(188);              // 부대표
-  const Y_DIV     = px(143);              // 경영부문 (이름보다 살짝 위)
-  const Y_DEPT    = px(168);              // CFO | 부문장
-  const Y_TEL     = px(261);             // Tel  (섹션 간격)
-  const Y_MOBILE  = px(299);             // Mobile
-  const Y_MAIL    = px(343);             // Mail
-  const Y_COMPANY = px(451);             // (주)에이티움 (섹션 간격)
-  const Y_ADDR    = px(477);             // 주소
+  const Y_NAME    = px(114);              // 이름 아랫변
+  const Y_TITLE   = px(163);              // 부대표
+  const Y_DIV     = px(88);               // 경영부문 (박스1 상단)
+  const Y_DEPT    = px(139);              // CFO | 부문장
+  const Y_TEL     = px(256);             // Tel  (박스2)
+  const Y_MOBILE  = px(303);             // Mobile
+  const Y_MAIL    = px(352);             // Mail
+  const Y_COMPANY = px(482);             // (주)에이티움 (박스3)
+  const Y_ADDR    = px(527);             // 주소
 
   // 이름 (좌측, 글자 간격 넓게) + 직급(국문)
   const namePx = Math.round(px(F_NAME));
   const koName = (rec.ko||'').replace(/\s/g,'');   // 기존 공백 제거 후 균일 자간
-  drawSpaced(X_NAME, Y_NAME, koName, EB(F_NAME), BLACK, namePx*0.18);
+  drawSpaced(X_NAME, Y_NAME, koName, EB(F_NAME), BLACK, namePx*0.22);
   ctx.font = B(F_TITLE); ctx.fillStyle = BLACK;
   ctx.fillText(rec.title||'', X_NAME, Y_TITLE);
 
@@ -1044,10 +1044,10 @@ async function renderCardKO(rec, canvas){
   ctx.font = fAddr; ctx.fillStyle = BLACK;
   ctx.fillText(CARD_ADDR_KO, X_LABEL, Y_ADDR);
 
-  // 로고 (좌측 하단) — 원본 실측: 폭 183px, 윗변 y419 (워드마크+태그라인 포함)
-  const lw = px(184), lh = lw * logo.height / logo.width;
-  const lx = X_NAME;
-  const ly = px(419);
+  // 로고 (좌측 하단) — 첨부 시안 실측: 폭 206px, 윗변 y455 (워드마크+태그라인 포함)
+  const lw = px(206), lh = lw * logo.height / logo.width;
+  const lx = px(13);
+  const ly = px(455);
   ctx.drawImage(logo, lx, ly, lw, lh);
 
   // 외곽 보더
