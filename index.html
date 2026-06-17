@@ -97,6 +97,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 /* ══════════════════════════════════════════════════════
    오프닝 인트로 (런처 화면)
    ══════════════════════════════════════════════════════ */
+/* ══ 워크인 인트로 (장하리 등장) ══ */
+#walk-intro{position:fixed;inset:0;z-index:3000;overflow:hidden;background:linear-gradient(135deg,#e8f4fd 0%,#fce4f0 50%,#e8f0fe 100%);opacity:1;transition:opacity .55s ease;}
+#walk-intro.done{opacity:0;pointer-events:none;}
+#walk-intro::before{content:'';position:absolute;inset:-40%;background:radial-gradient(circle at 22% 28%,rgba(168,200,255,.35) 0%,transparent 42%),radial-gradient(circle at 80% 72%,rgba(255,182,220,.32) 0%,transparent 42%);pointer-events:none;}
+.wi-floor{position:absolute;left:0;right:0;bottom:0;height:24%;background:radial-gradient(ellipse 55% 70% at 50% 100%,rgba(120,150,220,.18),transparent 70%);pointer-events:none;}
+.wi-walk{position:absolute;left:50%;bottom:5vh;height:min(70vh,560px);width:auto;transform:translateX(-260%);opacity:0;filter:drop-shadow(0 18px 22px rgba(60,80,160,.22));z-index:2;will-change:transform,opacity;}
+#walk-intro.run .wi-walk{animation:wiWalkIn 1.45s cubic-bezier(.33,0,.2,1) forwards,wiWalkOut .55s 1.55s ease-in forwards;}
+.wi-wave-wrap{position:absolute;left:50%;bottom:8vh;transform:translateX(-50%) scale(.7);opacity:0;z-index:3;filter:drop-shadow(0 16px 22px rgba(60,80,160,.22));will-change:transform,opacity;}
+#walk-intro.run .wi-wave-wrap{animation:wiWaveIn .55s 1.5s cubic-bezier(.2,.9,.25,1.4) forwards;}
+.wi-wave{display:block;height:min(62vh,500px);width:auto;transform-origin:62% 78%;}
+#walk-intro.run .wi-wave{animation:wiWaveHand 1s 2.05s ease-in-out 3;}
+.wi-speech{position:absolute;left:50%;top:13vh;transform:translateX(-50%) scale(.4);opacity:0;z-index:4;background:#fff;color:#1e3a8a;font-weight:900;font-size:clamp(22px,5vw,40px);padding:14px 30px;border-radius:28px;white-space:nowrap;box-shadow:0 10px 26px rgba(70,90,170,.28);font-family:'Nunito','Noto Sans KR',sans-serif;}
+.wi-speech::after{content:'';position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);border:11px solid transparent;border-top-color:#fff;border-bottom:0;}
+#walk-intro.run .wi-speech{animation:wiSpeechPop .5s 1.95s cubic-bezier(.175,.885,.32,1.5) forwards;}
+.wi-skip{position:absolute;top:16px;right:16px;z-index:6;background:rgba(255,255,255,.85);border:1px solid rgba(120,140,210,.3);color:#3a3a5c;font-weight:800;font-size:13px;font-family:'Nunito','Noto Sans KR',sans-serif;padding:8px 16px;border-radius:30px;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);box-shadow:0 4px 12px rgba(70,90,170,.16);transition:transform .15s,box-shadow .15s;opacity:0;animation:wiSkipShow .4s .5s forwards;}
+.wi-skip:hover{transform:translateY(-1px) scale(1.04);}
+.wi-skip:active{transform:scale(.96);}
+@keyframes wiWalkIn{0%{transform:translateX(-260%) translateY(0) rotate(-2deg);opacity:0;}10%{opacity:1;}20%{transform:translateX(-205%) translateY(-12px) rotate(1.5deg);}35%{transform:translateX(-160%) translateY(0) rotate(-1.5deg);}50%{transform:translateX(-118%) translateY(-12px) rotate(1.5deg);}65%{transform:translateX(-86%) translateY(0) rotate(-1.5deg);}80%{transform:translateX(-60%) translateY(-7px) rotate(.8deg);}100%{transform:translateX(-50%) translateY(0) rotate(0);opacity:1;}}
+@keyframes wiWalkOut{0%{transform:translateX(-50%) translateY(0) scale(1);opacity:1;}100%{transform:translateX(-50%) translateY(-26px) scale(1.35);opacity:0;}}
+@keyframes wiWaveIn{0%{transform:translateX(-50%) scale(.7) translateY(20px);opacity:0;}100%{transform:translateX(-50%) scale(1) translateY(0);opacity:1;}}
+@keyframes wiWaveHand{0%,100%{transform:rotate(0);}25%{transform:rotate(7deg);}60%{transform:rotate(-5deg);}}
+@keyframes wiSpeechPop{0%{transform:translateX(-50%) scale(.4) translateY(8px);opacity:0;}60%{transform:translateX(-50%) scale(1.08);opacity:1;}100%{transform:translateX(-50%) scale(1) translateY(0);opacity:1;}}
+@keyframes wiSkipShow{to{opacity:1;}}
+@media (prefers-reduced-motion: reduce){#walk-intro.run .wi-walk,#walk-intro.run .wi-wave-wrap,#walk-intro.run .wi-wave,#walk-intro.run .wi-speech{animation:none;}}
 #intro-overlay{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#e8f4fd 0%,#fce4f0 50%,#e8f0fe 100%);display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;transition:opacity .55s ease, transform .55s ease;}
 #intro-overlay.hide{opacity:0;transform:scale(1.04);pointer-events:none;}
 #intro-overlay::before{content:'';position:absolute;inset:-50%;background:radial-gradient(circle at 20% 30%,rgba(168,200,255,.35) 0%,transparent 40%),radial-gradient(circle at 80% 70%,rgba(255,182,220,.35) 0%,transparent 40%),radial-gradient(circle at 50% 50%,rgba(200,220,255,.2) 0%,transparent 50%);pointer-events:none;}
@@ -221,6 +245,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 <!-- ══════════════════════════════════════════════════════
      오프닝 인트로 (런처) — 챗봇 아이콘 클릭 시 사라짐
      ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════
+     워크인 인트로 (장하리 등장) — 페이지 진입 시 자동 재생 / 건너뛰기 가능
+     ══════════════════════════════════════════════════════ -->
+<div id="walk-intro">
+  <div class="wi-floor"></div>
+  <img class="wi-walk" src="jangari_walk.png" alt="장하리 등장">
+  <div class="wi-wave-wrap"><img class="wi-wave" src="jangari_wave.png" alt="장하리 인사"></div>
+  <div class="wi-speech">안녕하세요!!</div>
+  <button class="wi-skip" type="button" onclick="skipWalkIntro()">건너뛰기 ⏭</button>
+</div>
+
 <div id="intro-overlay">
   <div class="io-bubble"></div><div class="io-bubble"></div><div class="io-bubble"></div><div class="io-bubble"></div><div class="io-bubble"></div>
   <div class="io-inner">
@@ -389,6 +424,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 </div>
 
 <script>
+// ══════════════════════════════════════════════════════
+//  워크인 인트로 (장하리 등장) 제어
+// ══════════════════════════════════════════════════════
+function startWalkIntro(){
+  const wi = document.getElementById('walk-intro');
+  if(!wi) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){ wi.style.display='none'; return; }   // 모션 최소화 환경: 인트로 생략
+  wi.classList.add('run');
+  window.__wiTimer = setTimeout(endWalkIntro, 3500); // 약 3.5초 뒤 자동 종료
+}
+function skipWalkIntro(){           // '건너뛰기' 버튼
+  clearTimeout(window.__wiTimer);
+  endWalkIntro();
+}
+function endWalkIntro(){
+  const wi = document.getElementById('walk-intro');
+  if(!wi || wi.classList.contains('done')) return;
+  wi.classList.add('done');                          // 페이드아웃 → 런처(홈) 노출
+  setTimeout(()=>{ wi.style.display='none'; }, 600);
+}
+document.addEventListener('DOMContentLoaded', startWalkIntro);
+
 // ══════════════════════════════════════════════════════
 //  오프닝 인트로 제어
 // ══════════════════════════════════════════════════════
