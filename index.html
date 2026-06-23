@@ -257,6 +257,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .nc-btn.primary{background:linear-gradient(135deg,#2563eb,#1e3a8a);color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.32);}
 .nc-btn.primary:disabled,.nc-btn.ghost:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
 .nc-hint{font-size:11px;color:#94a3b8;text-align:center;margin-top:9px;line-height:1.4;}
+/* ══════ 로그인 게이트 모달 ══════ */
+#login-gate{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(20,30,60,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#login-gate.show{display:flex;}
+.lg-box{width:min(92vw,380px);background:#fff;border-radius:22px;padding:26px 22px 22px;box-shadow:0 18px 60px rgba(20,40,90,.35);animation:lgPop .35s cubic-bezier(.2,.9,.3,1.2);}
+@keyframes lgPop{from{opacity:0;transform:translateY(14px) scale(.96);}to{opacity:1;transform:none;}}
+.lg-logo{width:46px;height:46px;margin:0 auto 10px;border-radius:50%;background:var(--jangari-face) center/cover no-repeat;box-shadow:0 3px 10px rgba(29,78,216,.3);}
+.lg-title{text-align:center;font-size:18px;font-weight:800;color:#1e3a8a;}
+.lg-sub{text-align:center;font-size:12.5px;color:#6b7280;margin:6px 0 16px;line-height:1.5;}
+.lg-field{position:relative;margin-bottom:12px;}
+.lg-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;}
+.lg-field input{width:100%;box-sizing:border-box;padding:11px 13px;border:1.6px solid #e5e7eb;border-radius:12px;font-size:15px;outline:none;transition:border .15s;}
+.lg-field input:focus{border-color:#6c8fff;}
+#lg-list{position:absolute;left:0;right:0;top:100%;z-index:5;background:#fff;border:1px solid #e5e7eb;border-radius:12px;margin-top:4px;max-height:200px;overflow:auto;box-shadow:0 10px 26px rgba(0,0,0,.12);display:none;}
+#lg-list.show{display:block;}
+.lg-item{padding:9px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;}
+.lg-item:last-child{border-bottom:none;}
+.lg-item:hover,.lg-item.active{background:#eef3ff;}
+.lg-item b{font-size:14px;color:#111827;}
+.lg-item span{display:block;font-size:11px;color:#9ca3af;margin-top:2px;}
+.lg-empty{padding:10px 12px;font-size:12.5px;color:#9ca3af;}
+.lg-status{min-height:16px;font-size:12px;color:#ef4444;text-align:center;margin:2px 0 12px;}
+.lg-status.ok{color:#10b981;}
+.lg-btn{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#6c8fff,#4aaaf0);color:#fff;font-size:15px;font-weight:800;cursor:pointer;transition:opacity .15s;}
+.lg-btn:disabled{opacity:.45;cursor:not-allowed;}
+.lg-note{text-align:center;font-size:11px;color:#9ca3af;margin-top:12px;line-height:1.5;}
+
+/* ══════ 명함신청 비밀번호 필드 ══════ */
+.nc-pw{margin-top:12px;display:none;}
+.nc-pw.show{display:block;}
+.nc-pw label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;}
+.nc-pw input{width:100%;box-sizing:border-box;padding:10px 12px;border:1.6px solid #e5e7eb;border-radius:11px;font-size:15px;outline:none;}
+.nc-pw input:focus{border-color:#6c8fff;}
+.nc-pw .nc-pw-msg{font-size:11.5px;margin-top:5px;min-height:14px;color:#ef4444;}
+.nc-pw .nc-pw-msg.ok{color:#10b981;}
 </style>
 </head>
 <body>
@@ -270,6 +304,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 <div id="walk-intro">
   <div class="wi-logo"></div>
   <button class="wi-skip" type="button" onclick="skipWalkIntro()">건너뛰기</button>
+</div>
+
+<!-- ══════ 로그인 게이트 (오프닝 후 표시) ══════ -->
+<div id="login-gate">
+  <div class="lg-box">
+    <div class="lg-logo"></div>
+    <div class="lg-title">임직원 인증 🔒</div>
+    <div class="lg-sub">본인 이름을 검색·선택하고<br>휴대폰 번호 뒤 4자리를 입력해 주세요.</div>
+    <div class="lg-field">
+      <label for="lg-name">이름 (ID)</label>
+      <input id="lg-name" type="text" autocomplete="off" placeholder="예) 홍길동 (첫 글자만 입력해도 됩니다)" oninput="lgFilter()" onkeydown="lgKey(event)" />
+      <div id="lg-list"></div>
+    </div>
+    <div class="lg-field">
+      <label for="lg-pw">비밀번호 (휴대폰 뒤 4자리)</label>
+      <input id="lg-pw" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="● ● ● ●" oninput="lgPwInput()" onkeydown="lgPwKey(event)" />
+    </div>
+    <div class="lg-status" id="lg-status"></div>
+    <button class="lg-btn" id="lg-btn" onclick="lgSubmit()" disabled>잠금 해제</button>
+    <div class="lg-note">정보가 일치하지 않거나 누락된 경우<br>HR팀(장하리)에게 문의해 주세요.</div>
+  </div>
 </div>
 
 <div id="intro-overlay">
@@ -366,6 +421,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
       <label for="nc-name">이름</label>
       <input id="nc-name" type="text" autocomplete="off" placeholder="예) 홍길동 (첫 글자만 입력해도 됩니다)" oninput="ncFilter()" onkeydown="ncKey(event)" />
       <div id="nc-list"></div>
+    </div>
+    <div class="nc-pw" id="nc-pw">
+      <label for="nc-pw-input">비밀번호 (휴대폰 뒤 4자리)</label>
+      <input id="nc-pw-input" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="● ● ● ●" oninput="ncPwInput()" />
+      <div class="nc-pw-msg" id="nc-pw-msg"></div>
     </div>
     <div class="nc-status" id="nc-status"></div>
     <div class="nc-preview" id="nc-preview"><canvas id="nc-canvas"></canvas></div>
@@ -484,6 +544,105 @@ function endWalkIntro(){
   if(home){
     setTimeout(()=> home.classList.add('hari-in'), 150);
     setTimeout(()=>{ home.classList.remove('hari-in'); home.classList.add('hari-out'); }, 3000);
+  }
+  // 장하리가 우측 하단에 나타나는 시점에 중앙 로그인 게이트 표시
+  if(!lgUnlocked) setTimeout(openLoginGate, 500);
+}
+
+// ══════════════════════════════════════════════════════
+//  로그인 게이트 — 이름(ID) + 휴대폰 뒤 4자리(PW)
+// ══════════════════════════════════════════════════════
+function openLoginGate(){
+  if(lgUnlocked) return;
+  const g = document.getElementById('login-gate');
+  g.classList.add('show');
+  lgSelected = null; lgActiveIdx = -1;
+  document.getElementById('lg-name').value = '';
+  document.getElementById('lg-pw').value = '';
+  document.getElementById('lg-list').classList.remove('show');
+  document.getElementById('lg-btn').disabled = true;
+  lgSetStatus('');
+  loadCardDB().catch(()=>{});   // DB 미리 로드
+  setTimeout(()=>document.getElementById('lg-name').focus(), 250);
+}
+function closeLoginGate(){
+  document.getElementById('login-gate').classList.remove('show');
+}
+function lgSetStatus(t, ok){
+  const el = document.getElementById('lg-status');
+  el.textContent = t || '';
+  el.classList.toggle('ok', !!ok);
+}
+function lgFilter(){
+  lgSelected = null; lgActiveIdx = -1;
+  document.getElementById('lg-btn').disabled = true;
+  lgSetStatus('');
+  const q = document.getElementById('lg-name').value.trim();
+  const list = document.getElementById('lg-list');
+  if(!CARD_DB || !q){ list.classList.remove('show'); list.innerHTML=''; return; }
+  const starts=[], incl=[];
+  const qq=q.replace(/\s/g,'');
+  CARD_DB.forEach((p,i)=>{
+    const nm=(p.ko||'').replace(/\s/g,'');
+    if(nm.startsWith(qq)) starts.push(i);
+    else if(nm.includes(qq)) incl.push(i);
+  });
+  const idxs=starts.concat(incl).slice(0,40);
+  if(!idxs.length){ list.innerHTML='<div class="lg-empty">일치하는 이름이 없습니다.</div>'; list.classList.add('show'); return; }
+  list.innerHTML = idxs.map(i=>{
+    const p=CARD_DB[i];
+    const sub=[p.div,p.dept,p.title].filter(Boolean).join(' · ');
+    return `<div class="lg-item" data-idx="${i}" onclick="lgPick(${i})"><b>${p.ko}</b><span>${sub}</span></div>`;
+  }).join('');
+  list.classList.add('show');
+}
+function lgPick(i){
+  lgSelected = CARD_DB[i];
+  document.getElementById('lg-name').value = lgSelected.ko;
+  document.getElementById('lg-list').classList.remove('show');
+  const sub=[lgSelected.div,lgSelected.dept,lgSelected.title].filter(Boolean).join(' · ');
+  lgSetStatus('선택됨: '+lgSelected.ko+(sub?'  ('+sub+')':''), true);
+  lgRefreshBtn();
+  document.getElementById('lg-pw').focus();
+}
+function lgKey(e){
+  const list=document.getElementById('lg-list');
+  if(!list.classList.contains('show')) return;
+  const items=[...list.querySelectorAll('.lg-item')];
+  if(!items.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); lgActiveIdx=Math.min(lgActiveIdx+1,items.length-1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); lgActiveIdx=Math.max(lgActiveIdx-1,0); }
+  else if(e.key==='Enter'){ if(lgActiveIdx>=0){ e.preventDefault(); lgPick(+items[lgActiveIdx].dataset.idx); } return; }
+  else return;
+  items.forEach((el,k)=>el.classList.toggle('active',k===lgActiveIdx));
+  if(items[lgActiveIdx]) items[lgActiveIdx].scrollIntoView({block:'nearest'});
+}
+function lgPwInput(){
+  const v=document.getElementById('lg-pw');
+  v.value = v.value.replace(/\D/g,'').slice(0,4);
+  lgRefreshBtn();
+}
+function lgPwKey(e){ if(e.key==='Enter' && !document.getElementById('lg-btn').disabled) lgSubmit(); }
+function lgRefreshBtn(){
+  const pw=document.getElementById('lg-pw').value;
+  document.getElementById('lg-btn').disabled = !(lgSelected && pw.length===4);
+}
+function lgSubmit(){
+  if(!lgSelected) return;
+  const entered = document.getElementById('lg-pw').value;
+  const real = phoneLast4(lgSelected.mobile);
+  if(!real){
+    lgSetStatus('⚠️ 등록된 휴대폰 번호가 없습니다. HR팀에 문의해 주세요.');
+    return;
+  }
+  if(entered === real){
+    lgUnlocked = true;
+    lgSetStatus('✅ 인증되었습니다. 환영합니다, '+lgSelected.ko+'님!', true);
+    setTimeout(closeLoginGate, 600);
+  }else{
+    lgSetStatus('비밀번호(휴대폰 뒤 4자리)가 일치하지 않습니다.');
+    const pw=document.getElementById('lg-pw'); pw.value=''; pw.focus();
+    document.getElementById('lg-btn').disabled = true;
   }
 }
 document.addEventListener('DOMContentLoaded', startWalkIntro);
@@ -922,6 +1081,18 @@ let cardSelected = null;   // 선택된 레코드
 let ncActiveIdx = -1;      // 드롭다운 키보드 선택
 let _cardLogoImg = null;   // 로고 이미지 캐시
 
+// ── 로그인 게이트 상태 ──
+let lgSelected = null;     // 로그인용 선택 레코드
+let lgActiveIdx = -1;
+let lgUnlocked = false;    // 인증 통과 여부
+let ncPwOK = false;        // 명함신청 비밀번호 통과 여부
+
+// 휴대폰 번호에서 마지막 숫자 4자리 추출
+function phoneLast4(s){
+  const digits = (s||'').replace(/\D/g,'');
+  return digits.length >= 4 ? digits.slice(-4) : '';
+}
+
 // ── 인사 DB 로드 (첫 시트=직원, 둘째 시트=영문 매핑) ──
 async function loadCardDB(){
   if(CARD_DB) return CARD_DB;
@@ -987,6 +1158,10 @@ async function openNameCard(){
   cardSelected=null; ncActiveIdx=-1;
   const inp=document.getElementById('nc-name'); inp.value='';
   document.getElementById('nc-list').classList.remove('show');
+  document.getElementById('nc-pw').classList.remove('show');
+  document.getElementById('nc-pw-input').value='';
+  document.getElementById('nc-pw-msg').textContent='';
+  ncPwOK=false;
   document.getElementById('nc-preview').classList.remove('show');
   document.getElementById('nc-prev-btn').disabled=true;
   document.getElementById('nc-issue-btn').disabled=true;
@@ -1004,6 +1179,8 @@ function setNcStatus(t){ document.getElementById('nc-status').textContent=t; }
 // ── 자동완성 드롭다운 ──
 function ncFilter(){
   cardSelected=null; ncActiveIdx=-1;
+  ncPwOK=false;
+  document.getElementById('nc-pw').classList.remove('show');
   document.getElementById('nc-prev-btn').disabled=true;
   document.getElementById('nc-issue-btn').disabled=true;
   document.getElementById('nc-preview').classList.remove('show');
@@ -1030,10 +1207,41 @@ function ncPick(i){
   cardSelected=CARD_DB[i];
   document.getElementById('nc-name').value=cardSelected.ko;
   document.getElementById('nc-list').classList.remove('show');
-  document.getElementById('nc-prev-btn').disabled=false;
-  document.getElementById('nc-issue-btn').disabled=false;
+  // 비밀번호 검증 전까지 발급 비활성화
+  ncPwOK=false;
+  document.getElementById('nc-prev-btn').disabled=true;
+  document.getElementById('nc-issue-btn').disabled=true;
   const sub=[cardSelected.div,cardSelected.dept,cardSelected.title].filter(Boolean).join(' · ');
   setNcStatus('선택됨: '+cardSelected.ko+'  ('+sub+')');
+  // 비밀번호 입력 영역 표시
+  const pw=document.getElementById('nc-pw');
+  const pwi=document.getElementById('nc-pw-input');
+  const msg=document.getElementById('nc-pw-msg');
+  pw.classList.add('show');
+  pwi.value=''; msg.textContent=''; msg.classList.remove('ok');
+  setTimeout(()=>pwi.focus(),150);
+}
+// ── 명함신청 비밀번호 검증 (휴대폰 뒤 4자리) ──
+function ncPwInput(){
+  const pwi=document.getElementById('nc-pw-input');
+  pwi.value=pwi.value.replace(/\D/g,'').slice(0,4);
+  const msg=document.getElementById('nc-pw-msg');
+  ncPwOK=false;
+  document.getElementById('nc-prev-btn').disabled=true;
+  document.getElementById('nc-issue-btn').disabled=true;
+  if(pwi.value.length<4){ msg.textContent=''; msg.classList.remove('ok'); return; }
+  const real=phoneLast4(cardSelected && cardSelected.mobile);
+  if(!real){ msg.textContent='⚠️ 등록된 휴대폰 번호가 없습니다. HR팀에 문의해 주세요.'; msg.classList.remove('ok'); return; }
+  if(pwi.value===real){
+    ncPwOK=true;
+    msg.textContent='✅ 본인 확인 완료';
+    msg.classList.add('ok');
+    document.getElementById('nc-prev-btn').disabled=false;
+    document.getElementById('nc-issue-btn').disabled=false;
+  }else{
+    msg.textContent='비밀번호(휴대폰 뒤 4자리)가 일치하지 않습니다.';
+    msg.classList.remove('ok');
+  }
 }
 function ncKey(e){
   const list=document.getElementById('nc-list');
@@ -1263,7 +1471,7 @@ async function renderCardUnified(rec, canvas){
 
 // ── 미리보기 ──
 async function ncPreview(){
-  if(!cardSelected) return;
+  if(!cardSelected || !ncPwOK) return;
   setNcStatus('명함 생성 중…');
   try{
     await renderCard(cardSelected, document.getElementById('nc-canvas'));
@@ -1274,7 +1482,7 @@ async function ncPreview(){
 
 // ── 발급 (PNG 저장) ──
 async function ncIssue(){
-  if(!cardSelected) return;
+  if(!cardSelected || !ncPwOK) return;
   setNcStatus('명함 발급 중…');
   try{
     const canvas=document.getElementById('nc-canvas');
