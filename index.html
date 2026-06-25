@@ -562,6 +562,7 @@ function openLoginGate(){
   document.getElementById('lg-list').classList.remove('show');
   document.getElementById('lg-btn').disabled = true;
   lgSetStatus('');
+  CARD_DB = null;               // 캐시 비우고 최신 시트 반영
   loadCardDB().catch(()=>{});   // DB 미리 로드
   setTimeout(()=>document.getElementById('lg-name').focus(), 250);
 }
@@ -1093,7 +1094,7 @@ function phoneLast4(s){
   return digits.length >= 4 ? digits.slice(-4) : '';
 }
 
-// ── 인사 DB 로드 (첫 시트=직원, 둘째 시트=영문 매핑) ──
+// ── 인사 DB 로드 (헤더 동적 매핑 · 행 삭제/열 이동에 안전) ──
 async function loadCardDB(){
   if(CARD_DB) return CARD_DB;
   const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${CARD_SHEET_ID}?key=${CARD_API_KEY}&fields=sheets.properties.title`;
@@ -1105,16 +1106,50 @@ async function loadCardDB(){
   if(json.error) throw new Error(json.error.message||'데이터 로드 오류');
   const rows = json.values || [];
   CARD_DB = [];
+  if(rows.length < 2) return CARD_DB;
+
+  // 1행(헤더)을 읽어 열 위치를 동적으로 찾는다 → 행 삭제·열 이동에도 안전
+  const header = (rows[0]||[]).map(h => (h==null?'':String(h)).trim());
+  const findCol = (...names) => {
+    for(const nm of names){
+      const target = nm.replace(/\s|\.|·/g,'').toLowerCase();
+      const i = header.findIndex(h => h.replace(/\s|\.|·/g,'').toLowerCase() === target);
+      if(i !== -1) return i;
+    }
+    return -1;
+  };
+  const col = {
+    div:    findCol('본부','부문','division'),
+    dept:   findCol('부서','팀','department'),
+    ko:     findCol('이름','성명','국문명'),
+    en:     findCol('Name','영문명','영문이름','영문'),
+    title:  findCol('직급','직책','position','title'),
+    mobile: findCol('연락처','휴대폰','휴대전화','핸드폰','전화','mobile','phone'),
+    mail:   findCol('이메일','메일','email','e-mail'),
+    addr:   findCol('주소','address')
+  };
+  // 이름 컬럼을 못 찾으면(헤더 변형) 기존 위치(3,4)로 폴백
+  const koIdx = col.ko !== -1 ? col.ko : 3;
+  const enIdx = col.en !== -1 ? col.en : 4;
+  const get = (r, idx) => (idx >= 0 && r[idx] != null) ? String(r[idx]).trim() : '';
+
   for(let i=1;i<rows.length;i++){
-    const r = rows[i]; if(!r) continue;
-    const ko = (r[3]||'').trim(); if(!ko) continue;
+    const r = rows[i];
+    if(!r || !r.length) continue;          // 완전 빈 행 스킵 (행 삭제 잔재 방지)
+    const ko = get(r, koIdx);
+    if(!ko) continue;                      // 이름 없는 행 스킵
     CARD_DB.push({
-      ko, en:(r[4]||'').trim(), title:(r[5]||'').trim(),
-      div:(r[1]||'').trim(), dept:(r[2]||'').trim(),
-      mobile:(r[6]||'').trim(), mail:(r[7]||'').trim(),
-      addr:(r[8]||'').trim()   // I열: 주소(R&D센터는 본사+연구소 2개가 한 셀에 포함)
+      ko,
+      en:     get(r, enIdx),
+      title:  get(r, col.title),
+      div:    get(r, col.div),
+      dept:   get(r, col.dept),
+      mobile: get(r, col.mobile),
+      mail:   get(r, col.mail),
+      addr:   get(r, col.addr)
     });
   }
+
   // 둘째 시트(영문 매핑) 비동기 로드 — 실패해도 기본 매핑으로 동작
   if(meta.sheets[1]){
     try{ await loadEnMapping(meta.sheets[1].properties.title); }catch(e){ /* 기본 매핑 유지 */ }
